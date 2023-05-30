@@ -6,16 +6,26 @@ use crate::tasks::QueuedTask;
 
 pub struct RedisBackend {
     client: redis::Client,
-    read_timeout: usize,
     queue_key: &'static str,
+    pop_schedule_script: redis::Script,
 }
 
 impl RedisBackend {
     pub fn new<T: IntoConnectionInfo>(params: T) -> RedisBackend {
+        let pop_schedule_script = redis::Script::new(
+            r"
+            local key = KEYS[1]
+            local unix_ts = ARGV[1]
+            local res = redis.call('zrange', key, '-inf', unix_ts, 'byscore')
+            if #res and redis.call('zremrangebyscore', key, '-inf', unix_ts) == #res then
+                return res
+            end
+        ",
+        );
         RedisBackend {
             client: redis::Client::open(params).unwrap(),
-            read_timeout: 1,
             queue_key: "queue",
+            pop_schedule_script: pop_schedule_script,
         }
     }
 }
@@ -24,33 +34,34 @@ impl Clone for RedisBackend {
     fn clone(&self) -> Self {
         RedisBackend {
             client: self.client.clone(),
-            read_timeout: self.read_timeout,
             queue_key: self.queue_key,
+            pop_schedule_script: self.pop_schedule_script.clone(),
         }
     }
 }
 
 impl DequeuBackend for RedisBackend {
-    fn dequeue(&self) -> Option<QueuedTask> {
+    fn dequeue(&self, time: f64) -> Vec<QueuedTask> {
         let mut con = self.client.get_connection().unwrap();
+        let result: Vec<String> = self
+            .pop_schedule_script
+            .key(self.queue_key)
+            .arg(time)
+            .invoke(&mut con)
+            .unwrap();
 
-        let result: Option<(String, String)> =
-            con.brpop(self.queue_key, self.read_timeout).unwrap();
-        match result {
-            Some((_, value)) => match serde_json::from_str(&value) {
-                Ok(task) => Some(task),
-                Err(_) => None,
-            },
-            None => None,
-        }
+        return result
+            .iter()
+            .map(|s| serde_json::from_str(s).unwrap())
+            .collect();
     }
 }
 
 impl EnqueuBackend for RedisBackend {
-    fn enqueue(&self, task: QueuedTask) {
+    fn enqueue(&self, task: QueuedTask, time: f64) {
         let mut con = self.client.get_connection().unwrap();
         let _: () = con
-            .lpush(self.queue_key, serde_json::to_string(&task).unwrap())
+            .zadd(self.queue_key, serde_json::to_string(&task).unwrap(), time)
             .unwrap();
     }
 }

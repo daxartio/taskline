@@ -1,4 +1,5 @@
-use std::{cell::RefCell, rc::Rc};
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{cell::RefCell, rc::Rc, vec};
 
 use crate::{
     backend::{DequeuBackend, EnqueuBackend},
@@ -52,16 +53,20 @@ where
     }
 
     fn iter(&self) {
-        let Some(queued_task) = self.backend.dequeue() else {
-            return;
-        };
-        for task in &self.tasks {
-            for (name, func) in &task.tasks {
-                if name != &queued_task.name {
-                    continue;
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as f64;
+        let queued_tasks = self.backend.dequeue(now);
+        for queued_task in queued_tasks {
+            for task in &self.tasks {
+                for (name, func) in &task.tasks {
+                    if name != &queued_task.name {
+                        continue;
+                    }
+                    func(queued_task.request.clone());
+                    break;
                 }
-                func(queued_task.request.clone());
-                break;
             }
         }
     }
@@ -86,13 +91,13 @@ impl MemBackend {
 }
 
 impl DequeuBackend for MemBackend {
-    fn dequeue(&self) -> Option<QueuedTask> {
-        Some(self.queue.borrow().first().unwrap().clone())
+    fn dequeue(&self, _time: f64) -> Vec<QueuedTask> {
+        vec![self.queue.borrow().first().unwrap().clone()]
     }
 }
 
 impl EnqueuBackend for MemBackend {
-    fn enqueue(&self, task: QueuedTask) {
+    fn enqueue(&self, task: QueuedTask, _time: f64) {
         self.queue.borrow_mut().push(task);
     }
 }
@@ -100,8 +105,8 @@ impl EnqueuBackend for MemBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::client::Client;
     use crate::consumer;
+    use crate::producer::Producer;
     use crate::tasks::QueuedTask;
 
     #[test]
@@ -112,13 +117,16 @@ mod tests {
         }
 
         let backend = MemBackend::_new();
-        let client = Client::new(backend._clone());
+        let client = Producer::new(backend._clone());
         let mut consumer = Consumer::new(backend);
 
-        client.call(QueuedTask {
-            name: "func".to_string(),
-            request: "task".to_string(),
-        });
+        client.schedule(
+            QueuedTask {
+                name: "func".to_string(),
+                request: "task".to_string(),
+            },
+            0.,
+        );
 
         tasks.add_task("func", func);
 

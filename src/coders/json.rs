@@ -14,20 +14,7 @@ macro_rules! json_fn {
 pub use json_fn;
 
 #[macro_export]
-macro_rules! json_call {
-    ($client:ident, $task_name:ident, $queued_task:expr) => {{
-        call!(
-            $client,
-            $task_name,
-            serde_json::to_string(&$queued_task).unwrap()
-        );
-    }};
-}
-
-pub use json_call;
-
-#[macro_export]
-macro_rules! json_schedule {
+macro_rules! schedule_json {
     ($client:ident, $task_name:ident, $queued_task:expr, $time:expr) => {{
         schedule!(
             $client,
@@ -38,7 +25,7 @@ macro_rules! json_schedule {
     }};
 }
 
-pub use json_schedule;
+pub use schedule_json;
 
 #[cfg(test)]
 mod tests {
