@@ -1,3 +1,5 @@
+use std::{thread, time};
+
 extern crate redis;
 use redis::{Commands, IntoConnectionInfo};
 
@@ -16,10 +18,12 @@ impl RedisBackend {
             r"
             local key = KEYS[1]
             local unix_ts = ARGV[1]
-            local res = redis.call('zrange', key, '-inf', unix_ts, 'byscore')
-            if #res and redis.call('zremrangebyscore', key, '-inf', unix_ts) == #res then
-                return res
+            local limit = ARGV[2]
+            local res = redis.call('zrange', key, '-inf', unix_ts, 'byscore', 'limit', 0, limit)
+            for _, raw in ipairs(res) do
+                redis.call('zrem', key, raw)
             end
+            return res
         ",
         );
         RedisBackend {
@@ -47,8 +51,14 @@ impl DequeuBackend for RedisBackend {
             .pop_schedule_script
             .key(self.queue_key)
             .arg(time)
+            .arg(50)
             .invoke(&mut con)
             .unwrap();
+
+        if result.len() == 0 {
+            thread::sleep(time::Duration::from_millis(1000));
+            return vec![];
+        }
 
         return result
             .iter()

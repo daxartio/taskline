@@ -1,5 +1,7 @@
 extern crate redis;
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use serde::{Deserialize, Serialize};
 
 use taskline::backends::redis::RedisBackend;
@@ -8,11 +10,16 @@ use taskline::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Data {
-    key: String,
+    text: String,
+    dt: f64,
 }
 
 fn handle_task(request: Data) {
-    println!("Consumed: '{:?}'", request,);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as f64;
+    println!("Consumed {} ms: '{}'", now - request.dt, request.text);
 }
 
 fn main() {
@@ -23,11 +30,17 @@ fn main() {
     let producer = Producer::new(backend.clone());
     let mut consumer = Consumer::new(backend.clone());
 
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as f64;
+
     schedule_json!(
         producer,
         task_name,
         &Data {
-            key: "Hello!".to_string()
+            text: "Hello!".to_string(),
+            dt: now,
         },
         5000.
     );
