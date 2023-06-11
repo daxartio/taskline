@@ -13,8 +13,10 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1.68"
 redis = { version = "0.23", features=["connection-manager", "tokio-comp"] }
 serde = { version = "1.0.163", features = ["serde_derive"] }
 serde_json = "1.0.96"
+tokio = { version = "1.28.2", features = ["test-util", "macros"] }
 
 [dev-dependencies]

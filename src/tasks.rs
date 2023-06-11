@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -6,18 +8,20 @@ pub struct QueuedTask {
     pub request: String,
 }
 
-pub struct Tasks<T>
+pub struct Tasks<T, Fut>
 where
-    T: Fn(String) -> (),
+    T: Fn(String) -> Fut,
+    Fut: Future<Output = ()>,
 {
     pub tasks: Vec<(&'static str, T)>,
 }
 
-impl<T> Tasks<T>
+impl<T, Fut> Tasks<T, Fut>
 where
-    T: Fn(String) -> (),
+    T: Fn(String) -> Fut,
+    Fut: Future<Output = ()>,
 {
-    pub fn new() -> Tasks<T> {
+    pub fn new() -> Tasks<T, Fut> {
         Tasks { tasks: Vec::new() }
     }
 
@@ -27,16 +31,11 @@ where
         }
         self.tasks.push((name, func));
     }
-}
 
-#[macro_export]
-macro_rules! task {
-    ($tasks:ident, $task_name:ident, $f:expr) => {{
-        $tasks.add_task(stringify!($task_name), $f);
-    }};
+    pub fn get_task(&self, name: &str) -> Option<&T> {
+        self.tasks.iter().find_map(|(n, f)| if n == &name { Some(f) } else { None })
+    }
 }
-
-pub use task;
 
 #[cfg(test)]
 mod tests {
@@ -45,16 +44,16 @@ mod tests {
     #[test]
     fn test() {
         let mut tasks = Tasks::new();
-        fn func(_s: String) {}
-        task!(tasks, test, func);
+        async fn func(_s: String) {}
+        tasks.add_task("test", func);
     }
 
     #[test]
     #[should_panic]
     fn test_register_twice() {
         let mut tasks = Tasks::new();
-        fn func(_s: String) {}
-        task!(tasks, test, func);
-        task!(tasks, test, func);
+        async fn func(_s: String) {}
+        tasks.add_task("test", func);
+        tasks.add_task("test", func);
     }
 }

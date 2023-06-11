@@ -3,9 +3,8 @@ extern crate redis;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
+use tokio;
 
-use taskline::backends::redis::RedisBackend;
-use taskline::coders::json::{json_fn, schedule_json};
 use taskline::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -14,17 +13,19 @@ struct Data {
     dt: f64,
 }
 
-fn handle_task(request: Data) {
+async fn handle_task(request: String) {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_millis() as f64;
-    println!("Consumed {} ms: '{}'", now - request.dt, request.text);
+    let data: Data = serde_json::from_str(&request).unwrap();
+    println!("Consumed {} ms: '{}'", now - data.dt, data.text)
 }
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     let mut tasks = Tasks::new();
-    task!(tasks, task_name, json_fn!(handle_task));
+    tasks.add_task("task_name", handle_task);
 
     let backend = RedisBackend::new("redis://127.0.0.1/");
     let producer = Producer::new(backend.clone());
@@ -35,15 +36,19 @@ fn main() {
         .unwrap()
         .as_millis() as f64;
 
-    schedule_json!(
-        producer,
-        task_name,
-        &Data {
-            text: "Hello!".to_string(),
-            dt: now,
-        },
-        5000.
-    );
+    producer
+        .schedule(
+            QueuedTask {
+                name: "task_name".to_string(),
+                request: serde_json::to_string(&Data {
+                    text: "Hello!".to_string(),
+                    dt: now,
+                })
+                .unwrap(),
+            },
+            1000.,
+        )
+        .await;
     consumer.include_tasks(tasks);
-    consumer.run();
+    consumer.run().await;
 }

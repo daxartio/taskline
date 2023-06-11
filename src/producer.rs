@@ -18,26 +18,11 @@ where
         Producer { backend: backend }
     }
 
-    pub fn schedule(&self, task: QueuedTask, time: f64) {
+    pub async fn schedule(&self, task: QueuedTask, time: f64) {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as f64;
-        self.backend.enqueue(task, now + time);
+        self.backend.enqueue(task, now + time).await;
     }
 }
-
-#[macro_export]
-macro_rules! schedule {
-    ($producer:ident, $task_name:ident, $queued_task:expr, $time:expr) => {{
-        $producer.schedule(
-            QueuedTask {
-                name: stringify!($task_name).to_string(),
-                request: $queued_task,
-            },
-            $time,
-        );
-    }};
-}
-
-pub use schedule;
