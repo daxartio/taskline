@@ -1,7 +1,6 @@
 extern crate redis;
 use async_trait::async_trait;
 use redis::{AsyncCommands, IntoConnectionInfo};
-use tokio::time::{sleep, Duration};
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
 
@@ -10,7 +9,6 @@ pub struct RedisBackend {
     queue_key: &'static str,
     pop_schedule_script: redis::Script,
     read_batch_size: usize,
-    read_interval: Duration,
 }
 
 impl RedisBackend {
@@ -32,7 +30,6 @@ impl RedisBackend {
             queue_key: "queue",
             pop_schedule_script: pop_schedule_script,
             read_batch_size: 50,
-            read_interval: Duration::from_millis(1000),
         }
     }
 }
@@ -44,7 +41,6 @@ impl Clone for RedisBackend {
             queue_key: self.queue_key,
             pop_schedule_script: self.pop_schedule_script.clone(),
             read_batch_size: self.read_batch_size,
-            read_interval: self.read_interval,
         }
     }
 }
@@ -61,11 +57,6 @@ impl DequeuBackend for RedisBackend {
             .invoke_async(&mut con)
             .await
             .unwrap();
-
-        if result.len() == 0 {
-            sleep(self.read_interval).await;
-            return vec![];
-        }
 
         return result;
     }

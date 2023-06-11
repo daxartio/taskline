@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::vec;
@@ -8,51 +7,27 @@ use async_trait::async_trait;
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
 
-pub struct Consumer<T, F, Fut>
+pub struct Consumer<T>
 where
     T: DequeuBackend,
-    F: Fn(String) -> Fut,
-    Fut: Future<Output = ()>,
 {
     backend: T,
-    running: bool,
-    on_task: F,
 }
 
-impl<T, F, Fut> Consumer<T, F, Fut>
+impl<T> Consumer<T>
 where
     T: DequeuBackend,
-    F: Fn(String) -> Fut,
-    Fut: Future<Output = ()>,
 {
-    pub fn new(backend: T, on_task: F) -> Consumer<T, F, Fut> {
-        Consumer {
-            backend,
-            running: true,
-            on_task,
-        }
+    pub fn new(backend: T) -> Consumer<T> {
+        Consumer { backend }
     }
 
-    pub async fn run(&self) {
-        while self.running {
-            self.iter().await;
-        }
-    }
-
-    pub fn stop(&mut self) {
-        self.running = false;
-    }
-
-    async fn iter(&self) {
+    pub async fn next(&self) -> Vec<String> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as f64;
-        let tasks = self.backend.dequeue(now).await;
-        // spawn a task for each queued task
-        for task in tasks {
-            (self.on_task)(task).await;
-        }
+        self.backend.dequeue(now).await
     }
 }
 
@@ -104,10 +79,16 @@ mod tests {
 
         let backend = MemBackend::new();
         let client = Producer::new(backend.clone());
-        let consumer = Consumer::new(backend, func);
+        let consumer = Consumer::new(backend);
 
         client.schedule("task".to_string(), 0.).await;
 
-        consumer.iter().await;
+        loop {
+            let tasks = consumer.next().await;
+            for task in tasks {
+                func(task).await;
+            }
+            break;
+        }
     }
 }
