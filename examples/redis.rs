@@ -24,12 +24,9 @@ async fn handle_task(request: String) {
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
-    let mut tasks = Tasks::new();
-    tasks.add_task("task_name", handle_task);
-
     let backend = RedisBackend::new("redis://127.0.0.1/");
     let producer = Producer::new(backend.clone());
-    let mut consumer = Consumer::new(backend.clone());
+    let consumer = Consumer::new(backend.clone(), handle_task);
 
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -38,17 +35,13 @@ async fn main() {
 
     producer
         .schedule(
-            QueuedTask {
-                name: "task_name".to_string(),
-                request: serde_json::to_string(&Data {
-                    text: "Hello!".to_string(),
-                    dt: now,
-                })
-                .unwrap(),
-            },
+            serde_json::to_string(&Data {
+                text: "Hello!".to_string(),
+                dt: now,
+            })
+            .unwrap(),
             1000.,
         )
         .await;
-    consumer.include_tasks(tasks);
     consumer.run().await;
 }

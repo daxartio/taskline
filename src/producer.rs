@@ -1,7 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::backend::EnqueuBackend;
-use crate::tasks::QueuedTask;
 
 pub struct Producer<T>
 where
@@ -18,7 +17,7 @@ where
         Producer { backend: backend }
     }
 
-    pub async fn schedule(&self, task: QueuedTask, time: f64) {
+    pub async fn schedule(&self, task: String, time: f64) {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()

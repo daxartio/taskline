@@ -6,10 +6,7 @@ use std::vec;
 
 use async_trait::async_trait;
 
-use crate::{
-    backend::{DequeuBackend, EnqueuBackend},
-    tasks::{QueuedTask, Tasks},
-};
+use crate::backend::{DequeuBackend, EnqueuBackend};
 
 pub struct Consumer<T, F, Fut>
 where
@@ -17,9 +14,9 @@ where
     F: Fn(String) -> Fut,
     Fut: Future<Output = ()>,
 {
-    tasks: Vec<Tasks<F, Fut>>,
     backend: T,
     running: bool,
+    on_task: F,
 }
 
 impl<T, F, Fut> Consumer<T, F, Fut>
@@ -28,25 +25,12 @@ where
     F: Fn(String) -> Fut,
     Fut: Future<Output = ()>,
 {
-    pub fn new(backend: T) -> Consumer<T, F, Fut> {
+    pub fn new(backend: T, on_task: F) -> Consumer<T, F, Fut> {
         Consumer {
-            tasks: Vec::new(),
             backend,
             running: true,
+            on_task,
         }
-    }
-
-    pub fn include_tasks(&mut self, tasks: Tasks<F, Fut>) {
-        for (name, _) in &tasks.tasks {
-            if self
-                .tasks
-                .iter()
-                .any(|t| t.tasks.iter().any(|(n, _)| n == name))
-            {
-                panic!("Task name '{}' already exists", name);
-            }
-        }
-        self.tasks.push(tasks);
     }
 
     pub async fn run(&self) {
@@ -64,21 +48,16 @@ where
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as f64;
-        let queued_tasks = self.backend.dequeue(now).await;
+        let tasks = self.backend.dequeue(now).await;
         // spawn a task for each queued task
-        for queued_task in queued_tasks {
-            for task in &self.tasks {
-                let Some(func) = task.get_task(&queued_task.name) else {
-                    continue;
-                };
-                func(queued_task.request.clone()).await;
-            }
+        for task in tasks {
+            (self.on_task)(task).await;
         }
     }
 }
 
 struct MemBackend {
-    queue: Arc<Mutex<RefCell<Vec<QueuedTask>>>>,
+    queue: Arc<Mutex<RefCell<Vec<String>>>>,
 }
 
 impl MemBackend {
@@ -99,14 +78,14 @@ impl MemBackend {
 
 #[async_trait]
 impl DequeuBackend for MemBackend {
-    async fn dequeue(&self, _time: f64) -> Vec<QueuedTask> {
+    async fn dequeue(&self, _time: f64) -> Vec<String> {
         vec![self.queue.lock().unwrap().borrow().first().unwrap().clone()]
     }
 }
 
 #[async_trait]
 impl EnqueuBackend for MemBackend {
-    async fn enqueue(&self, task: QueuedTask, _time: f64) {
+    async fn enqueue(&self, task: String, _time: f64) {
         self.queue.lock().unwrap().borrow_mut().push(task);
     }
 }
@@ -114,49 +93,21 @@ impl EnqueuBackend for MemBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::consumer;
     use crate::producer::Producer;
-    use crate::tasks::QueuedTask;
     use tokio;
 
     #[tokio::test]
     async fn test_consumer() {
-        let mut tasks = Tasks::new();
         async fn func(s: String) {
             println!("Called with {:?}", s)
         }
 
         let backend = MemBackend::new();
         let client = Producer::new(backend.clone());
-        let mut consumer = Consumer::new(backend);
+        let consumer = Consumer::new(backend, func);
 
-        client
-            .schedule(
-                QueuedTask {
-                    name: "func".to_string(),
-                    request: "task".to_string(),
-                },
-                0.,
-            )
-            .await;
+        client.schedule("task".to_string(), 0.).await;
 
-        tasks.add_task("func", func);
-
-        consumer.include_tasks(tasks);
         consumer.iter().await;
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_register_twice() {
-        let mut consumer = consumer::Consumer::new(MemBackend::new());
-        let mut tasks = Tasks::new();
-        async fn func(_s: String) {}
-        tasks.add_task("test", func);
-        consumer.include_tasks(tasks);
-
-        let mut tasks = Tasks::new();
-        tasks.add_task("test", func);
-        consumer.include_tasks(tasks);
     }
 }

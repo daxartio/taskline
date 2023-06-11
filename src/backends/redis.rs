@@ -4,7 +4,6 @@ use redis::{AsyncCommands, IntoConnectionInfo};
 use tokio::time::{sleep, Duration};
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
-use crate::tasks::QueuedTask;
 
 pub struct RedisBackend {
     client: redis::Client,
@@ -52,7 +51,7 @@ impl Clone for RedisBackend {
 
 #[async_trait]
 impl DequeuBackend for RedisBackend {
-    async fn dequeue(&self, time: f64) -> Vec<QueuedTask> {
+    async fn dequeue(&self, time: f64) -> Vec<String> {
         let mut con = self.client.get_async_connection().await.unwrap();
         let result: Vec<String> = self
             .pop_schedule_script
@@ -68,20 +67,14 @@ impl DequeuBackend for RedisBackend {
             return vec![];
         }
 
-        return result
-            .iter()
-            .map(|s| serde_json::from_str(s).unwrap())
-            .collect();
+        return result;
     }
 }
 
 #[async_trait]
 impl EnqueuBackend for RedisBackend {
-    async fn enqueue(&self, task: QueuedTask, time: f64) {
+    async fn enqueue(&self, task: String, time: f64) {
         let mut con = self.client.get_async_connection().await.unwrap();
-        let _: () = con
-            .zadd(self.queue_key, serde_json::to_string(&task).unwrap(), time)
-            .await
-            .unwrap();
+        let _: () = con.zadd(self.queue_key, task, time).await.unwrap();
     }
 }
