@@ -1,5 +1,16 @@
-# taskline
+# Taskline
 
+WIP
+
+The library allows to create scheduled tasks via Redis for Rust.
+
+```rust
+async fn handle(request: String) {}
+
+producer.schedule("Hello!".to_string(), now() + 1000.).await;
+```
+
+<!--
 [![Crates.io](https://img.shields.io/crates/v/taskline.svg)](https://crates.io/crates/taskline)
 [![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline)
 [![CI](https://github.com/daxartio/taskline/workflows/CI/badge.svg)](https://github.com/daxartio/taskline/actions)
@@ -13,6 +24,7 @@
   [this](https://www.rust-lang.org/tools/install) guide.
 * run `cargo install taskline`
 
+-->
 ## License
 
 * [MIT LICENSE](LICENSE)

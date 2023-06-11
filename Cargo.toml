@@ -17,4 +17,4 @@ async-trait = "0.1.68"
 redis = { version = "0.23", features=["connection-manager", "tokio-comp"] }
 
 [dev-dependencies]
-tokio = { version = "1.28.2", features = ["test-util", "macros"] }
+tokio = { version = "1.28.2", features = ["full"] }

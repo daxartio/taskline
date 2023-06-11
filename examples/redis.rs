@@ -12,7 +12,7 @@ fn now() -> f64 {
         .as_millis() as f64
 }
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() {
     let backend = RedisBackend::from(RedisBackendBuilder {
         params: "redis://127.0.0.1/",
