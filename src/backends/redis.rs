@@ -4,6 +4,34 @@ use redis::{AsyncCommands, IntoConnectionInfo};
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
 
+pub struct RedisBackendBuilder<T: IntoConnectionInfo> {
+    pub params: T,
+    pub queue_key: &'static str,
+    pub read_batch_size: usize,
+}
+
+impl<T: IntoConnectionInfo> From<RedisBackendBuilder<T>> for RedisBackend {
+    fn from(builder: RedisBackendBuilder<T>) -> Self {
+        RedisBackend {
+            client: redis::Client::open(builder.params).unwrap(),
+            queue_key: builder.queue_key,
+            pop_schedule_script: redis::Script::new(
+                r"
+                local key = KEYS[1]
+                local unix_ts = ARGV[1]
+                local limit = ARGV[2]
+                local res = redis.call('zrange', key, '-inf', unix_ts, 'byscore', 'limit', 0, limit)
+                for _, raw in ipairs(res) do
+                    redis.call('zrem', key, raw)
+                end
+                return res",
+            ),
+            read_batch_size: builder.read_batch_size,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct RedisBackend {
     client: redis::Client,
     queue_key: &'static str,
@@ -11,42 +39,8 @@ pub struct RedisBackend {
     read_batch_size: usize,
 }
 
-impl RedisBackend {
-    pub fn new<T: IntoConnectionInfo>(params: T) -> RedisBackend {
-        let pop_schedule_script = redis::Script::new(
-            r"
-            local key = KEYS[1]
-            local unix_ts = ARGV[1]
-            local limit = ARGV[2]
-            local res = redis.call('zrange', key, '-inf', unix_ts, 'byscore', 'limit', 0, limit)
-            for _, raw in ipairs(res) do
-                redis.call('zrem', key, raw)
-            end
-            return res
-        ",
-        );
-        RedisBackend {
-            client: redis::Client::open(params).unwrap(),
-            queue_key: "queue",
-            pop_schedule_script: pop_schedule_script,
-            read_batch_size: 50,
-        }
-    }
-}
-
-impl Clone for RedisBackend {
-    fn clone(&self) -> Self {
-        RedisBackend {
-            client: self.client.clone(),
-            queue_key: self.queue_key,
-            pop_schedule_script: self.pop_schedule_script.clone(),
-            read_batch_size: self.read_batch_size,
-        }
-    }
-}
-
 #[async_trait]
-impl DequeuBackend for RedisBackend {
+impl DequeuBackend<String, f64> for RedisBackend {
     async fn dequeue(&self, time: f64) -> Vec<String> {
         let mut con = self.client.get_async_connection().await.unwrap();
         let result: Vec<String> = self
@@ -63,7 +57,7 @@ impl DequeuBackend for RedisBackend {
 }
 
 #[async_trait]
-impl EnqueuBackend for RedisBackend {
+impl EnqueuBackend<String, f64> for RedisBackend {
     async fn enqueue(&self, task: String, time: f64) {
         let mut con = self.client.get_async_connection().await.unwrap();
         let _: () = con.zadd(self.queue_key, task, time).await.unwrap();

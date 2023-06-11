@@ -1,92 +1,91 @@
-use std::cell::RefCell;
-use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::vec;
+use std::marker::PhantomData;
 
-use async_trait::async_trait;
+use crate::backend::DequeuBackend;
 
-use crate::backend::{DequeuBackend, EnqueuBackend};
-
-pub struct Consumer<T>
+pub struct Consumer<T, R, S>
 where
-    T: DequeuBackend,
+    T: DequeuBackend<R, S>,
 {
     backend: T,
+    _phantom_request: PhantomData<R>,
+    _phantom_score: PhantomData<S>,
 }
 
-impl<T> Consumer<T>
+impl<T, R, S> Consumer<T, R, S>
 where
-    T: DequeuBackend,
+    T: DequeuBackend<R, S>,
 {
-    pub fn new(backend: T) -> Consumer<T> {
-        Consumer { backend }
-    }
-
-    pub async fn next(&self) -> Vec<String> {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis() as f64;
-        self.backend.dequeue(now).await
-    }
-}
-
-struct MemBackend {
-    queue: Arc<Mutex<RefCell<Vec<String>>>>,
-}
-
-impl MemBackend {
-    #[allow(dead_code)]
-    fn new() -> MemBackend {
-        MemBackend {
-            queue: Arc::new(Mutex::new(RefCell::new(Vec::new()))),
+    pub fn new(backend: T) -> Consumer<T, R, S> {
+        Consumer {
+            backend,
+            _phantom_request: PhantomData,
+            _phantom_score: PhantomData,
         }
     }
 
-    #[allow(dead_code)]
-    fn clone(&self) -> MemBackend {
-        MemBackend {
-            queue: self.queue.clone(),
-        }
-    }
-}
-
-#[async_trait]
-impl DequeuBackend for MemBackend {
-    async fn dequeue(&self, _time: f64) -> Vec<String> {
-        vec![self.queue.lock().unwrap().borrow().first().unwrap().clone()]
-    }
-}
-
-#[async_trait]
-impl EnqueuBackend for MemBackend {
-    async fn enqueue(&self, task: String, _time: f64) {
-        self.queue.lock().unwrap().borrow_mut().push(task);
+    pub async fn next(&self, score: S) -> Vec<R> {
+        self.backend.dequeue(score).await
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::sync::{Arc, Mutex};
+    use std::vec;
+
     use super::*;
+    use crate::prelude::EnqueuBackend;
     use crate::producer::Producer;
-    use tokio;
+
+    use async_trait::async_trait;
+
+    struct MemBackend {
+        queue: Arc<Mutex<RefCell<Vec<i32>>>>,
+    }
+
+    impl MemBackend {
+        #[allow(dead_code)]
+        fn new() -> MemBackend {
+            MemBackend {
+                queue: Arc::new(Mutex::new(RefCell::new(Vec::new()))),
+            }
+        }
+
+        #[allow(dead_code)]
+        fn clone(&self) -> MemBackend {
+            MemBackend {
+                queue: self.queue.clone(),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl DequeuBackend<i32, ()> for MemBackend {
+        async fn dequeue(&self, _score: ()) -> Vec<i32> {
+            vec![self.queue.lock().unwrap().borrow().first().unwrap().clone()]
+        }
+    }
+
+    #[async_trait]
+    impl EnqueuBackend<i32, ()> for MemBackend {
+        async fn enqueue(&self, task: i32, _score: ()) {
+            self.queue.lock().unwrap().borrow_mut().push(task);
+        }
+    }
 
     #[tokio::test]
     async fn test_consumer() {
-        async fn func(s: String) {
-            println!("Called with {:?}", s)
-        }
-
         let backend = MemBackend::new();
         let client = Producer::new(backend.clone());
         let consumer = Consumer::new(backend);
 
-        client.schedule("task".to_string(), 0.).await;
+        client.schedule(1, ()).await;
 
         loop {
-            let tasks = consumer.next().await;
+            let tasks = consumer.next(()).await;
             for task in tasks {
-                func(task).await;
+                assert_eq!(task, 1);
             }
             break;
         }

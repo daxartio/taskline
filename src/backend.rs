@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait DequeuBackend {
-    async fn dequeue(&self, time: f64) -> Vec<String>;
+pub trait DequeuBackend<R, S> {
+    async fn dequeue(&self, score: S) -> Vec<R>;
 }
 
 #[async_trait]
-pub trait EnqueuBackend {
-    async fn enqueue(&self, task: String, time: f64);
+pub trait EnqueuBackend<R, S> {
+    async fn enqueue(&self, task: R, score: S);
 }
