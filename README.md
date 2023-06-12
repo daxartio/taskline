@@ -17,7 +17,7 @@ producer.schedule("Hello!".to_string(), now() + 1000.).await;
 
 That means the handle will be run in 1 second.
 
-You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs).
+You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs). See [redis_json example](examples/redis_json.rs)
 
 ## Installation
 

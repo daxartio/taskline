@@ -17,4 +17,6 @@ async-trait = "0.1.68"
 redis = { version = "0.23", features=["connection-manager", "tokio-comp"] }
 
 [dev-dependencies]
+serde = { version = "1.0.164", features = ["serde_derive"] }
+serde_json = "1.0.96"
 tokio = { version = "1.28.2", features = ["full"] }
