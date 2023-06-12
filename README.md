@@ -1,9 +1,9 @@
 # Taskline
 
 [![Crates.io](https://img.shields.io/crates/v/taskline.svg)](https://crates.io/crates/taskline)
-[![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline)
-[![CI](https://github.com/daxartio/taskline/workflows/CI/badge.svg)](https://github.com/daxartio/taskline/actions)
-[![Coverage Status](https://coveralls.io/repos/github/daxartio/taskline/badge.svg?branch=main)](https://coveralls.io/github/daxartio/taskline?branch=main)
+[![CI](https://img.shields.io/github/actions/workflow/status/daxartio/taskline/ci.yml?branch=main)](https://github.com/daxartio/taskline/actions)
+<!-- [![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline) -->
+<!-- [![Coverage Status](https://coveralls.io/repos/github/daxartio/taskline/badge.svg?branch=main)](https://coveralls.io/github/daxartio/taskline?branch=main) -->
 
 WIP
 
