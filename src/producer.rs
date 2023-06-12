@@ -17,7 +17,7 @@ where
 {
     pub fn new(backend: T) -> Producer<T, R, S> {
         Producer {
-            backend: backend,
+            backend,
             _phantom_request: PhantomData,
             _phantom_score: PhantomData,
         }
