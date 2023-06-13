@@ -4,17 +4,17 @@ use redis::{AsyncCommands, IntoConnectionInfo};
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
 
-pub struct RedisBackendBuilder<T: IntoConnectionInfo> {
+pub struct RedisBackendBuilder<T: IntoConnectionInfo, S: Into<String>> {
     pub params: T,
-    pub queue_key: &'static str,
+    pub queue_key: S,
     pub read_batch_size: usize,
 }
 
-impl<T: IntoConnectionInfo> From<RedisBackendBuilder<T>> for RedisBackend {
-    fn from(builder: RedisBackendBuilder<T>) -> Self {
+impl<T: IntoConnectionInfo, S: Into<String>> From<RedisBackendBuilder<T, S>> for RedisBackend {
+    fn from(builder: RedisBackendBuilder<T, S>) -> Self {
         RedisBackend {
             client: redis::Client::open(builder.params).unwrap(),
-            queue_key: builder.queue_key,
+            queue_key: builder.queue_key.into(),
             pop_schedule_script: redis::Script::new(
                 r"
                 local key = KEYS[1]
@@ -34,7 +34,7 @@ impl<T: IntoConnectionInfo> From<RedisBackendBuilder<T>> for RedisBackend {
 #[derive(Clone)]
 pub struct RedisBackend {
     client: redis::Client,
-    queue_key: &'static str,
+    queue_key: String,
     pop_schedule_script: redis::Script,
     read_batch_size: usize,
 }
@@ -45,7 +45,7 @@ impl DequeuBackend<String, f64> for RedisBackend {
         let mut con = self.client.get_async_connection().await.unwrap();
         let result: Vec<String> = self
             .pop_schedule_script
-            .key(self.queue_key)
+            .key(self.queue_key.as_str())
             .arg(time)
             .arg(self.read_batch_size)
             .invoke_async(&mut con)
@@ -60,6 +60,6 @@ impl DequeuBackend<String, f64> for RedisBackend {
 impl EnqueuBackend<String, f64> for RedisBackend {
     async fn enqueue(&self, task: String, time: f64) {
         let mut con = self.client.get_async_connection().await.unwrap();
-        let _: () = con.zadd(self.queue_key, task, time).await.unwrap();
+        let _: () = con.zadd(self.queue_key.as_str(), task, time).await.unwrap();
     }
 }

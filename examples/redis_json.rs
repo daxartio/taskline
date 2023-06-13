@@ -45,10 +45,11 @@ impl DequeuBackend<Data, f64> for JsonRedisBackend {
 
 #[tokio::main]
 async fn main() {
+    let queue_key = String::from("taskline");
     let backend = JsonRedisBackend {
         backend: RedisBackend::from(RedisBackendBuilder {
             params: "redis://127.0.0.1/",
-            queue_key: "taskline",
+            queue_key,
             read_batch_size: 10,
         }),
     };
