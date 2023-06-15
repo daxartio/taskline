@@ -46,7 +46,7 @@ async fn test_consumer() {
 
     client.schedule(1, ()).await;
 
-    let tasks = consumer.next(()).await;
+    let tasks = consumer.poll(()).await;
     for task in tasks {
         assert_eq!(task, 1);
     }

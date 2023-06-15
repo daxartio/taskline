@@ -23,7 +23,7 @@ where
         }
     }
 
-    pub async fn next(&self, score: S) -> Vec<R> {
+    pub async fn poll(&self, score: S) -> Vec<R> {
         self.backend.dequeue(score).await
     }
 }

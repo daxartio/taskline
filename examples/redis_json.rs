@@ -46,12 +46,12 @@ impl DequeuBackend<Data, f64> for JsonRedisBackend {
 #[tokio::main]
 async fn main() {
     let queue_key = String::from("taskline");
-    let backend = JsonRedisBackend {
-        backend: RedisBackend::from(RedisBackendBuilder {
-            params: "redis://127.0.0.1/",
+    let backend: JsonRedisBackend = JsonRedisBackend {
+        backend: RedisBackend::new(
+            redis::Client::open("redis://127.0.0.1/").unwrap(),
             queue_key,
-            read_batch_size: 10,
-        }),
+            10,
+        ),
     };
     let producer = Producer::new(backend.clone());
     let consumer = Consumer::new(backend.clone());
@@ -67,7 +67,7 @@ async fn main() {
         .await;
 
     loop {
-        let tasks = consumer.next(now()).await;
+        let tasks = consumer.poll(now()).await;
         if tasks.is_empty() {
             sleep(Duration::from_millis(100)).await;
             continue;

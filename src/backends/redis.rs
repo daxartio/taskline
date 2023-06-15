@@ -1,20 +1,36 @@
 extern crate redis;
 use async_trait::async_trait;
-use redis::{AsyncCommands, IntoConnectionInfo};
+use redis::AsyncCommands;
+use std::ops;
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
 
-pub struct RedisBackendBuilder<T: IntoConnectionInfo, S: Into<String>> {
-    pub params: T,
+pub struct RedisBackendConfig<S: ToString> {
     pub queue_key: S,
     pub read_batch_size: usize,
 }
 
-impl<T: IntoConnectionInfo, S: Into<String>> From<RedisBackendBuilder<T, S>> for RedisBackend {
-    fn from(builder: RedisBackendBuilder<T, S>) -> Self {
-        RedisBackend {
-            client: redis::Client::open(builder.params).unwrap(),
-            queue_key: builder.queue_key.into(),
+impl<S: ToString> ops::Add<redis::Client> for RedisBackendConfig<S> {
+    type Output = RedisBackend;
+
+    fn add(self, client: redis::Client) -> RedisBackend {
+        RedisBackend::new(client, self.queue_key.to_string(), self.read_batch_size)
+    }
+}
+
+#[derive(Clone)]
+pub struct RedisBackend {
+    client: redis::Client,
+    queue_key: String,
+    pop_schedule_script: redis::Script,
+    read_batch_size: usize,
+}
+
+impl RedisBackend {
+    pub fn new(client: redis::Client, queue_key: String, read_batch_size: usize) -> Self {
+        Self {
+            client,
+            queue_key,
             pop_schedule_script: redis::Script::new(
                 r"
                 local key = KEYS[1]
@@ -26,17 +42,9 @@ impl<T: IntoConnectionInfo, S: Into<String>> From<RedisBackendBuilder<T, S>> for
                 end
                 return res",
             ),
-            read_batch_size: builder.read_batch_size,
+            read_batch_size,
         }
     }
-}
-
-#[derive(Clone)]
-pub struct RedisBackend {
-    client: redis::Client,
-    queue_key: String,
-    pop_schedule_script: redis::Script,
-    read_batch_size: usize,
 }
 
 #[async_trait]
