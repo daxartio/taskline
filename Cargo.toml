@@ -3,7 +3,7 @@ members = ["./"]
 
 [package]
 name = "taskline"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Danil Akhtarov <d.akhtarov@tinkoff.ru>"]
 edition = "2021"
 description = "A simple distributed task queue for Rust"
