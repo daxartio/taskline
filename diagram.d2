@@ -1,0 +1,37 @@
+Scheduled Queue: {
+  Consumer: {
+    c1: consumer 1
+    c2: consumer 2
+    c3: consumer 3
+    c: ...
+  }
+
+  Producer: {
+    p: producer
+  }
+
+  Redis: {
+    shape: cylinder
+  }
+
+  Producer.p -> Redis: task 1, task 2, task 3,\ntask 4, task 5
+  Redis -> Consumer.c1: "[task 1, task 2, task 3]"
+  Redis -> Consumer.c2: "[task 4]"
+  Redis -> Consumer.c3: "[task 5]"
+  Redis -> Consumer.c: "..."
+}
+
+Interface: {
+  grid-columns: 1
+  Producer: {
+    shape: class
+
+    schedule(task String, score f64)
+  }
+
+  Consumer: {
+    shape: class
+
+    poll(score f64): Vec<String>
+  }
+}
