@@ -21,18 +21,30 @@ async fn main() {
     let producer = Producer::new(backend.clone());
     let consumer = Consumer::new(backend.clone());
 
-    producer.schedule("Hello!".to_string(), now() + 1000.).await;
+    producer
+        .schedule("Hello!".to_string(), now() + 1000.)
+        .await
+        .unwrap();
 
     loop {
         let tasks = consumer.poll(now()).await;
-        if tasks.is_empty() {
-            sleep(Duration::from_millis(100)).await;
-            continue;
-        }
-        for task in tasks {
-            tokio::task::spawn(async move {
-                println!("Consumed '{}'", task);
-            });
+        match tasks {
+            Ok(tasks) => {
+                if tasks.is_empty() {
+                    sleep(Duration::from_millis(100)).await;
+                    continue;
+                }
+                for task in tasks {
+                    tokio::task::spawn(async move {
+                        println!("Consumed '{}'", task);
+                    });
+                }
+            }
+            Err(e) => {
+                sleep(Duration::from_millis(1000)).await;
+                println!("Error: {:?}", e);
+                continue;
+            }
         }
     }
 }

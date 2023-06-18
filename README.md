@@ -5,19 +5,26 @@
 <!-- [![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline) -->
 <!-- [![Coverage Status](https://coveralls.io/repos/github/daxartio/taskline/badge.svg?branch=main)](https://coveralls.io/github/daxartio/taskline?branch=main) -->
 
-WIP
-
 The library allows to create scheduled tasks via Redis for Rust.
 
 ```rust
-async fn handle(request: String) {}
-
 producer.schedule("Hello!".to_string(), now() + 1000.).await;
+
+loop {
+    let tasks = consumer.poll(now()).await.unwrap();
+    if tasks.is_empty() {
+        sleep(Duration::from_millis(100)).await;
+        continue;
+    }
+    for task in tasks {
+        println!("Consumed {:?}", task);
+    }
+}
 ```
 
-That means the handle will be run in 1 second.
+That means the Consumed will be printed in 1 second.
 
-You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs). See [redis_json example](examples/redis_json.rs)
+You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs). See [redis_json example](examples/redis_json.rs).
 
 ![diagram](diagram.png)
 

@@ -26,20 +26,21 @@ struct JsonRedisBackend {
 }
 
 #[async_trait]
-impl EnqueuBackend<Data, f64> for JsonRedisBackend {
-    async fn enqueue(&self, data: Data, score: f64) {
+impl EnqueuBackend<Data, f64, redis::RedisError> for JsonRedisBackend {
+    async fn enqueue(&self, data: Data, score: f64) -> Result<(), redis::RedisError> {
         let data = serde_json::to_string(&data).unwrap();
         self.backend.enqueue(data, score).await
     }
 }
 
 #[async_trait]
-impl DequeuBackend<Data, f64> for JsonRedisBackend {
-    async fn dequeue(&self, score: f64) -> Vec<Data> {
-        let data = self.backend.dequeue(score).await;
-        data.into_iter()
+impl DequeuBackend<Data, f64, redis::RedisError> for JsonRedisBackend {
+    async fn dequeue(&self, score: f64) -> Result<Vec<Data>, redis::RedisError> {
+        let data = self.backend.dequeue(score).await?;
+        Ok(data
+            .into_iter()
             .map(|d| serde_json::from_str(&d).unwrap())
-            .collect()
+            .collect())
     }
 }
 
@@ -64,10 +65,11 @@ async fn main() {
             },
             now() + 1000.,
         )
-        .await;
+        .await
+        .unwrap();
 
     loop {
-        let tasks = consumer.poll(now()).await;
+        let tasks = consumer.poll(now()).await.unwrap();
         if tasks.is_empty() {
             sleep(Duration::from_millis(100)).await;
             continue;

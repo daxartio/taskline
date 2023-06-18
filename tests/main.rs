@@ -24,16 +24,17 @@ mod backend {
     }
 
     #[async_trait]
-    impl DequeuBackend<i32, ()> for MemBackend {
-        async fn dequeue(&self, _score: ()) -> Vec<i32> {
-            vec![*self.queue.lock().unwrap().borrow().first().unwrap()]
+    impl DequeuBackend<i32, (), ()> for MemBackend {
+        async fn dequeue(&self, _score: ()) -> Result<Vec<i32>, ()> {
+            Ok(vec![*self.queue.lock().unwrap().borrow().first().unwrap()])
         }
     }
 
     #[async_trait]
-    impl EnqueuBackend<i32, ()> for MemBackend {
-        async fn enqueue(&self, task: i32, _score: ()) {
+    impl EnqueuBackend<i32, (), ()> for MemBackend {
+        async fn enqueue(&self, task: i32, _score: ()) -> Result<(), ()> {
             self.queue.lock().unwrap().borrow_mut().push(task);
+            Ok(())
         }
     }
 }
@@ -44,9 +45,9 @@ async fn test_consumer() {
     let client = Producer::new(backend.clone());
     let consumer = Consumer::new(backend);
 
-    client.schedule(1, ()).await;
+    client.schedule(1, ()).await.unwrap();
 
-    let tasks = consumer.poll(()).await;
+    let tasks = consumer.poll(()).await.unwrap();
     for task in tasks {
         assert_eq!(task, 1);
     }
