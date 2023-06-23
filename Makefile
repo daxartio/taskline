@@ -9,3 +9,7 @@ test:
 .PHONY: fmt
 fmt:
 	cargo fmt --all
+
+.PHONY: d2
+d2:
+	d2 diagram.d2 diagram.png

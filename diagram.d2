@@ -7,14 +7,16 @@ Scheduled Queue: {
   }
 
   Producer: {
-    p: producer
+    p1: producer 1
+    p2: producer 2
   }
 
   Redis: {
     shape: cylinder
   }
 
-  Producer.p -> Redis: task 1, task 2, task 3,\ntask 4, task 5
+  Producer.p1 -> Redis: task 1, task 2, task 3
+  Producer.p2 -> Redis: task 4, task 5
   Redis -> Consumer.c1: "[task 1, task 2, task 3]"
   Redis -> Consumer.c2: "[task 4]"
   Redis -> Consumer.c3: "[task 5]"
