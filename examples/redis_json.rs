@@ -1,7 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 extern crate redis;
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tokio::time::{sleep, Duration};
 
@@ -14,46 +13,20 @@ fn now() -> f64 {
         .as_millis() as f64
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct Data {
     id: u64,
     name: String,
 }
 
-#[derive(Clone)]
-struct JsonRedisBackend {
-    backend: RedisBackend,
-}
-
-#[async_trait]
-impl EnqueuBackend<Data, f64, redis::RedisError> for JsonRedisBackend {
-    async fn enqueue(&self, data: Data, score: f64) -> Result<(), redis::RedisError> {
-        let data = serde_json::to_string(&data).unwrap();
-        self.backend.enqueue(data, score).await
-    }
-}
-
-#[async_trait]
-impl DequeuBackend<Data, f64, redis::RedisError> for JsonRedisBackend {
-    async fn dequeue(&self, score: f64) -> Result<Vec<Data>, redis::RedisError> {
-        let data = self.backend.dequeue(score).await?;
-        Ok(data
-            .into_iter()
-            .map(|d| serde_json::from_str(&d).unwrap())
-            .collect())
-    }
-}
-
 #[tokio::main]
 async fn main() {
     let queue_key = String::from("taskline");
-    let backend: JsonRedisBackend = JsonRedisBackend {
-        backend: RedisBackend::new(
-            redis::Client::open("redis://127.0.0.1/").unwrap(),
-            queue_key,
-            10,
-        ),
-    };
+    let backend = JsonRedisBackend::<Data>::new(RedisBackend::new(
+        redis::Client::open("redis://127.0.0.1/").unwrap(),
+        queue_key,
+        10,
+    ));
     let producer = Producer::new(backend.clone());
     let consumer = Consumer::new(backend.clone());
 
@@ -76,7 +49,7 @@ async fn main() {
         }
         for task in tasks {
             tokio::task::spawn(async move {
-                println!("Consumed {:?}", task);
+                println!("Consumed {:?}", task.unwrap());
             });
         }
     }
