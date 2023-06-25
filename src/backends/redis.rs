@@ -5,19 +5,27 @@ use std::ops;
 
 use crate::backend::{DequeuBackend, EnqueuBackend};
 
+/// Configuration for Redis backend.
+/// You can use it to create `RedisBackend` instance.
 pub struct RedisBackendConfig<S: ToString> {
+    /// Redis key used to store tasks.
     pub queue_key: S,
+    /// Number of tasks to read in one batch.
     pub read_batch_size: usize,
 }
 
 impl<S: ToString> ops::Add<redis::Client> for RedisBackendConfig<S> {
     type Output = RedisBackend;
 
+    /// Create `RedisBackend` instance.
+    /// It requires `redis::Client` instance.
     fn add(self, client: redis::Client) -> RedisBackend {
         RedisBackend::new(client, self.queue_key.to_string(), self.read_batch_size)
     }
 }
 
+/// Redis backend.
+/// It implements both `DequeuBackend` and `EnqueuBackend` traits.
 #[derive(Clone)]
 pub struct RedisBackend {
     client: redis::Client,
@@ -27,6 +35,10 @@ pub struct RedisBackend {
 }
 
 impl RedisBackend {
+    /// Create new instance of `RedisBackend`.
+    /// It requires `redis::Client` instance, redis key used to store tasks and number of tasks to read in one batch.
+    /// It also creates lua script used to pop tasks from redis.
+    /// You can use score to sort tasks in queue. Usially it is unix timestamp.
     pub fn new(client: redis::Client, queue_key: String, read_batch_size: usize) -> Self {
         Self {
             client,
@@ -49,7 +61,10 @@ impl RedisBackend {
 
 #[async_trait]
 impl DequeuBackend<String, f64, RedisError> for RedisBackend {
-    async fn dequeue(&self, time: f64) -> Result<Vec<String>, RedisError> {
+    /// Calls lua script to pop tasks from redis.
+    /// If there are no tasks in queue it returns empty vector.
+    /// If there are no tasks with score less than `score`, returns empty vector.
+    async fn dequeue(&self, score: f64) -> Result<Vec<String>, RedisError> {
         let mut con = match self.client.get_async_connection().await {
             Ok(con) => con,
             Err(e) => return Err(e),
@@ -58,7 +73,7 @@ impl DequeuBackend<String, f64, RedisError> for RedisBackend {
         let result: Vec<String> = match self
             .pop_schedule_script
             .key(self.queue_key.as_str())
-            .arg(time)
+            .arg(score)
             .arg(self.read_batch_size)
             .invoke_async(&mut con)
             .await
@@ -73,11 +88,13 @@ impl DequeuBackend<String, f64, RedisError> for RedisBackend {
 
 #[async_trait]
 impl EnqueuBackend<String, f64, RedisError> for RedisBackend {
-    async fn enqueue(&self, task: String, time: f64) -> Result<(), RedisError> {
+    /// Adds task to redis.
+    /// It uses score to sort tasks in queue. Usially it is unix timestamp.
+    async fn enqueue(&self, task: String, score: f64) -> Result<(), RedisError> {
         let mut con = match self.client.get_async_connection().await {
             Ok(con) => con,
             Err(e) => return Err(e),
         };
-        con.zadd(self.queue_key.as_str(), task, time).await
+        con.zadd(self.queue_key.as_str(), task, score).await
     }
 }
