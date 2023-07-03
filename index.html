@@ -151,6 +151,21 @@
 <p>The library allows to create scheduled tasks via Redis for Rust.</p>
 <h2 id="how-does-it-work"><a class="header" href="#how-does-it-work">How does it work?</a></h2>
 <p>Taskline revolves around the concept of a task. A task is a unit of work that is requested by a producer to be completed by a consumer / worker.</p>
+<p>A producer can schedule a task to be completed at a specific time in the future. A consumer can then fetch the task and complete it.</p>
+<p>There are backends for consumers and producers, which must impliment the <code>DequeuBackend</code> and <code>EnqueuBackend</code> traits. Right now, there is only one backend, which is Redis.</p>
+<h2 id="when-should-i-use-taskline"><a class="header" href="#when-should-i-use-taskline">When should I use Taskline?</a></h2>
+<p>Taskline is a good fit for applications that need to schedule work to be done in the future. For example, Taskline is a good fit for:</p>
+<ul>
+<li>Scheduling emails to be sent in the future</li>
+<li>Scheduling a notification to be sent to a user in the future</li>
+</ul>
+<h2 id="a-format-of-a-task-for-sending-and-receiving-via-redis"><a class="header" href="#a-format-of-a-task-for-sending-and-receiving-via-redis">A format of a task for sending and receiving via Redis</a></h2>
+<p>Actualy, Taskline uses a format of a backend. You can use any format which you want.</p>
+<p>There are two formats of a task for sending and receiving via Redis which are implemented in the library:</p>
+<ul>
+<li>JSON</li>
+<li>String</li>
+</ul>
 
                     </main>
 
