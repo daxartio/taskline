@@ -26,6 +26,7 @@ impl<S: ToString> ops::Add<redis::Client> for RedisBackendConfig<S> {
 
 /// Redis backend.
 /// It implements both `DequeuBackend` and `EnqueuBackend` traits.
+/// You can use score to sort tasks in queue. Usually it is unix timestamp.
 #[derive(Clone)]
 pub struct RedisBackend {
     client: redis::Client,
@@ -38,7 +39,6 @@ impl RedisBackend {
     /// Create new instance of `RedisBackend`.
     /// It requires `redis::Client` instance, redis key used to store tasks and number of tasks to read in one batch.
     /// It also creates lua script used to pop tasks from redis.
-    /// You can use score to sort tasks in queue. Usially it is unix timestamp.
     pub fn new(client: redis::Client, queue_key: String, read_batch_size: usize) -> Self {
         Self {
             client,
@@ -88,8 +88,8 @@ impl DequeuBackend<String, f64, RedisError> for RedisBackend {
 
 #[async_trait]
 impl EnqueuBackend<String, f64, RedisError> for RedisBackend {
-    /// Adds task to redis.
-    /// It uses score to sort tasks in queue. Usially it is unix timestamp.
+    /// Adds a task to redis.
+    /// It uses score to sort tasks in queue. Usually it is unix timestamp.
     async fn enqueue(&self, task: String, score: f64) -> Result<(), RedisError> {
         let mut con = match self.client.get_async_connection().await {
             Ok(con) => con,

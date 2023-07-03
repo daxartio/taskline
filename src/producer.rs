@@ -31,7 +31,7 @@ where
         }
     }
 
-    /// Schedules task to queue.
+    /// Schedules a task to queue.
     /// Returns `Ok(())` if task was successfully scheduled.
     pub async fn schedule(&self, task: R, score: S) -> Result<(), E> {
         self.backend.enqueue(task, score).await

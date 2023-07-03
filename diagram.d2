@@ -1,26 +1,35 @@
 Scheduled Queue: {
-  Consumer: {
+  Consumers: {
+    app: "" {
+      shape: image
+      icon: https://cdn4.iconfinder.com/data/icons/logos-brands-5/24/rust-1024.png
+    }
     c1: consumer 1
     c2: consumer 2
     c3: consumer 3
     c: ...
   }
 
-  Producer: {
+  Producers: {
+    app: "" {
+      shape: image
+      icon: https://cdn4.iconfinder.com/data/icons/logos-brands-5/24/rust-1024.png
+    }
     p1: producer 1
     p2: producer 2
   }
 
   Redis: {
-    shape: cylinder
+    shape: image
+    icon: https://cdn4.iconfinder.com/data/icons/redis-2/1451/Untitled-2-1024.png
   }
 
-  Producer.p1 -> Redis: task 1, task 2, task 3
-  Producer.p2 -> Redis: task 4, task 5
-  Redis -> Consumer.c1: "[task 1, task 2, task 3]"
-  Redis -> Consumer.c2: "[task 4]"
-  Redis -> Consumer.c3: "[task 5]"
-  Redis -> Consumer.c: "..."
+  Producers.p1 -> Redis: task 1, task 2, task 3
+  Producers.p2 -> Redis: task 4, task 5
+  Redis -> Consumers.c1: "[task 1, task 2, task 3]"
+  Redis -> Consumers.c2: "[task 4]"
+  Redis -> Consumers.c3: "[task 5]"
+  Redis -> Consumers.c: "..."
 }
 
 Interface: {
@@ -31,7 +40,7 @@ Interface: {
     schedule(task String, score f64)
   }
 
-  Consumer: {
+  Consumers: {
     shape: class
 
     poll(score f64): Vec<String>
