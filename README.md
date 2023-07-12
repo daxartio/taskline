@@ -12,10 +12,7 @@ producer.schedule("Hello!".to_string(), now() + 30000.).await;
 
 loop {
     let tasks = consumer.poll(now()).await.unwrap();
-    if tasks.is_empty() {
-        sleep(Duration::from_millis(100)).await;
-        continue;
-    }
+
     for task in tasks {
         println!("Consumed {:?}", task);
     }
