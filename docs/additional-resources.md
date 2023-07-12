@@ -7,6 +7,7 @@
 - [Crate](https://crates.io/crates/taskline)
 - [License](https://github.com/daxartio/taskline/blob/main/LICENSE)
 - [Contribution guide](https://github.com/daxartio/taskline/blob/main/CONTRIBUTING.md)
+- [Changelog](https://github.com/daxartio/taskline/blob/main/CHANGELOG.md)
 
 ## Alternatives
 
