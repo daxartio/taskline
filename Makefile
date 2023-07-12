@@ -1,10 +1,11 @@
 .PHONY: check
 check:
-	cargo clippy --all-targets --all-features --workspace
+	cargo fmt --all -- --check
+	cargo clippy -- -D warnings
 
 .PHONY: test
 test:
-	cargo test --all-features --workspace
+	cargo test
 
 .PHONY: fmt
 fmt:

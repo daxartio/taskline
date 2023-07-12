@@ -56,7 +56,6 @@ impl RedisBackend {
     ///
     /// It requires `redis::Client` instance, redis key used to store tasks and number of tasks to read in one batch.
     /// It also creates lua script used to pop tasks from redis.
-    /// 
     /// * `client` - redis client.
     /// * `queue_key` - redis key used to store tasks.
     /// * `read_batch_size` - number of tasks to read in one batch.
