@@ -33,6 +33,23 @@ impl<T> JsonRedisBackend<T> {
     }
 }
 
+impl<T> JsonRedisBackend<T>
+where
+    T: Serialize + Send + Sync,
+{
+    /// Delete task from queue.
+    pub async fn delete(&self, data: T) -> Result<(), JsonRedisError> {
+        let data = match serde_json::to_string(&data) {
+            Ok(data) => data,
+            Err(e) => return Err(JsonRedisError::Serde(e)),
+        };
+        match self.backend.delete(data).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(JsonRedisError::Redis(e)),
+        }
+    }
+}
+
 #[async_trait]
 impl<T> EnqueuBackend<T, f64, JsonRedisError> for JsonRedisBackend<T>
 where

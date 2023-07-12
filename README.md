@@ -30,8 +30,13 @@ You can customize a format of an event for redis. Write your wrapper over [Redis
 - [x] Send/receive tasks in redis
 - [x] Delayed tasks
 - [x] Support json
+- [x] Deleting from storage after handling. Experimental implementation
 - [ ] Support redis cluster
-- [ ] Tasks which are deleted from storage after handling. Right now tasks are deleted before handling
+- [ ] Metrics
+
+## Requirements
+
+- Redis 6.2.0 or higher
 
 ## Installation
 

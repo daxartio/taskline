@@ -12,6 +12,21 @@ pub struct RedisBackendConfig<S: ToString> {
     pub queue_key: S,
     /// Number of tasks to read in one batch.
     pub read_batch_size: usize,
+    /// If `true`, tasks will be deleted from queue after reading.
+    /// If autodelete is `false`, tasks should be deleted explicitly from queue after reading with `RedisBackend::delete`.
+    pub autodelete: bool,
+}
+
+impl<S: ToString> RedisBackendConfig<S> {
+    /// Create `RedisBackendConfig` instance.
+    pub fn with_client(self, client: redis::Client) -> RedisBackend {
+        RedisBackend::new(
+            client,
+            self.queue_key.to_string(),
+            self.read_batch_size,
+            self.autodelete,
+        )
+    }
 }
 
 impl<S: ToString> ops::Add<redis::Client> for RedisBackendConfig<S> {
@@ -20,7 +35,7 @@ impl<S: ToString> ops::Add<redis::Client> for RedisBackendConfig<S> {
     /// Create `RedisBackend` instance.
     /// It requires `redis::Client` instance.
     fn add(self, client: redis::Client) -> RedisBackend {
-        RedisBackend::new(client, self.queue_key.to_string(), self.read_batch_size)
+        self.with_client(client)
     }
 }
 
@@ -33,13 +48,25 @@ pub struct RedisBackend {
     queue_key: String,
     pop_schedule_script: redis::Script,
     read_batch_size: usize,
+    autodelete: bool,
 }
 
 impl RedisBackend {
     /// Create new instance of `RedisBackend`.
+    ///
     /// It requires `redis::Client` instance, redis key used to store tasks and number of tasks to read in one batch.
     /// It also creates lua script used to pop tasks from redis.
-    pub fn new(client: redis::Client, queue_key: String, read_batch_size: usize) -> Self {
+    /// 
+    /// * `client` - redis client.
+    /// * `queue_key` - redis key used to store tasks.
+    /// * `read_batch_size` - number of tasks to read in one batch.
+    /// * `autodelete` - if `true`, tasks will be deleted from queue after reading. If `false`, tasks should be deleted explicitly from queue after reading with `RedisBackend::delete`.
+    pub fn new(
+        client: redis::Client,
+        queue_key: String,
+        read_batch_size: usize,
+        autodelete: bool,
+    ) -> Self {
         Self {
             client,
             queue_key,
@@ -48,14 +75,30 @@ impl RedisBackend {
                 local key = KEYS[1]
                 local unix_ts = ARGV[1]
                 local limit = ARGV[2]
+                local autodelete = ARGV[3] == '1'
                 local res = redis.call('zrange', key, '-inf', unix_ts, 'byscore', 'limit', 0, limit)
-                for _, raw in ipairs(res) do
-                    redis.call('zrem', key, raw)
+                if autodelete then
+                    for _, raw in ipairs(res) do
+                        redis.call('zrem', key, raw)
+                    end
                 end
                 return res",
             ),
             read_batch_size,
+            autodelete,
         }
+    }
+}
+
+impl RedisBackend {
+    /// Delete task from queue.
+    pub async fn delete(&self, task: String) -> Result<(), RedisError> {
+        let mut con = match self.client.get_async_connection().await {
+            Ok(con) => con,
+            Err(e) => return Err(e),
+        };
+
+        con.zrem(self.queue_key.as_str(), task).await
     }
 }
 
@@ -75,6 +118,7 @@ impl DequeuBackend<String, f64, RedisError> for RedisBackend {
             .key(self.queue_key.as_str())
             .arg(score)
             .arg(self.read_batch_size)
+            .arg(self.autodelete as u8)
             .invoke_async(&mut con)
             .await
         {

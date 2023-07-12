@@ -5,12 +5,13 @@ members = ["./"]
 name = "taskline"
 version = "0.4.2"
 authors = ["Danil Akhtarov <daxartio@gmail.com>"]
-edition = "2021"
 description = "A simple distributed task queue for Rust"
 repository = "https://github.com/daxartio/taskline"
+keywords = ["redis", "queue", "task", "async", "distributed"]
+categories = ["asynchronous", "web-programming", "no-std"]
 license = "MIT"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
+rust-version = "1.60"
 
 [dependencies]
 async-trait = "0.1.68"

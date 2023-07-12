@@ -17,7 +17,9 @@ async fn main() {
     let backend = RedisBackendConfig {
         queue_key: "taskline",
         read_batch_size: 10,
-    } + redis::Client::open("redis://127.0.0.1/").unwrap();
+        autodelete: true,
+    }
+    .with_client(redis::Client::open("redis://127.0.0.1/").unwrap());
     let producer = Producer::new(backend.clone());
     let consumer = Consumer::new(backend.clone());
 
