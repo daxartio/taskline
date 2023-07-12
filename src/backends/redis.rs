@@ -18,7 +18,8 @@ pub struct RedisBackendConfig<S: ToString> {
 }
 
 impl<S: ToString> RedisBackendConfig<S> {
-    /// Create `RedisBackendConfig` instance.
+    /// Create `RedisBackend` instance.
+    /// It requires `redis::Client` instance.
     pub fn with_client(self, client: redis::Client) -> RedisBackend {
         RedisBackend::new(
             client,
@@ -34,6 +35,7 @@ impl<S: ToString> ops::Add<redis::Client> for RedisBackendConfig<S> {
 
     /// Create `RedisBackend` instance.
     /// It requires `redis::Client` instance.
+    /// Alias for `RedisBackendConfig::with_client`.
     fn add(self, client: redis::Client) -> RedisBackend {
         self.with_client(client)
     }
