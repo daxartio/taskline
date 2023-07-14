@@ -168,7 +168,7 @@
 </ul>
 <h2 id="deleting-from-storage-after-handling"><a class="header" href="#deleting-from-storage-after-handling">Deleting from storage after handling</a></h2>
 <p>If you want to delete a task from storage after handling, you can use <code>RedisJsonBackend</code> or <code>RedisBackend</code> with <code>autodelete=false</code> parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as <a href="https://redis.com/glossary/redlock/">redlock</a>. See <a href="https://redis.io/docs/manual/patterns/distributed-locks/">Distributed Locks with Redis</a>.</p>
-<p>Don't forget to delete a task explicitly from storage after handling. See <code>RedisBackend::delete</code>.</p>
+<p>Don't forget to delete a task explicitly from storage after handling. See <code>Committer::commit</code>.</p>
 <p>It's experimental implementation. In the future, it will be implemented more comfortable way.</p>
 
                     </main>
