@@ -30,6 +30,6 @@ There are two formats of a task for sending and receiving via Redis which are im
 
 If you want to delete a task from storage after handling, you can use `RedisJsonBackend` or `RedisBackend` with `autodelete=false` parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as [redlock](https://redis.com/glossary/redlock/). See [Distributed Locks with Redis](https://redis.io/docs/manual/patterns/distributed-locks/).
 
-Don't forget to delete a task explicitly from storage after handling. See `RedisBackend::delete`.
+Don't forget to delete a task explicitly from storage after handling. See `Committer::commit`.
 
 It's experimental implementation. In the future, it will be implemented more comfortable way.

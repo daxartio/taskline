@@ -29,6 +29,7 @@ async fn main() {
     ));
     let producer = Producer::new(backend.clone());
     let consumer = Consumer::new(backend.clone());
+    let committer = Committer::new(backend.clone());
 
     producer
         .schedule(
@@ -50,7 +51,7 @@ async fn main() {
         for task in tasks {
             let task = task.unwrap();
             println!("Consumed {:?}", task);
-            backend.delete(task).await.unwrap();
+            committer.commit(task).await.unwrap();
         }
     }
 }

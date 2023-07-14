@@ -21,3 +21,12 @@ pub trait DequeuBackend<R, S, E> {
 pub trait EnqueuBackend<R, S, E> {
     async fn enqueue(&self, task: R, score: S) -> Result<(), E>;
 }
+
+/// The trait for backend implementations which can be used to commit tasks.
+///
+/// R - type of task.
+/// E - type of error.
+#[async_trait]
+pub trait CommitBackend<R, E> {
+    async fn commit(&self, task: R) -> Result<(), E>;
+}

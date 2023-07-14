@@ -2,7 +2,7 @@ extern crate redis;
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::backend::{DequeuBackend, EnqueuBackend};
+use crate::backend::{CommitBackend, DequeuBackend, EnqueuBackend};
 use crate::backends::redis::RedisBackend;
 
 /// Error type for `JsonRedisBackend`.
@@ -38,12 +38,27 @@ where
     T: Serialize + Send + Sync,
 {
     /// Delete task from queue.
+    #[deprecated(since = "0.6.0", note = "please use `Committer::commit` instead")]
     pub async fn delete(&self, data: T) -> Result<(), JsonRedisError> {
+        self.commit(data).await
+    }
+}
+
+#[async_trait]
+impl<T> CommitBackend<T, JsonRedisError> for JsonRedisBackend<T>
+where
+    T: Serialize + Send + Sync,
+{
+    /// Delete task from queue.
+    async fn commit(&self, data: T) -> Result<(), JsonRedisError> {
+        if self.backend.autodelete {
+            return Ok(());
+        }
         let data = match serde_json::to_string(&data) {
             Ok(data) => data,
             Err(e) => return Err(JsonRedisError::Serde(e)),
         };
-        match self.backend.delete(data).await {
+        match self.backend.commit(data).await {
             Ok(_) => Ok(()),
             Err(e) => Err(JsonRedisError::Redis(e)),
         }

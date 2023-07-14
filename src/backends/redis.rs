@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use redis::{AsyncCommands, RedisError};
 use std::ops;
 
-use crate::backend::{DequeuBackend, EnqueuBackend};
+use crate::backend::{CommitBackend, DequeuBackend, EnqueuBackend};
 
 /// Configuration for Redis backend.
 /// You can use it to create `RedisBackend` instance.
@@ -50,7 +50,7 @@ pub struct RedisBackend {
     queue_key: String,
     pop_schedule_script: redis::Script,
     read_batch_size: usize,
-    autodelete: bool,
+    pub(crate) autodelete: bool,
 }
 
 impl RedisBackend {
@@ -93,7 +93,19 @@ impl RedisBackend {
 
 impl RedisBackend {
     /// Delete task from queue.
+    #[deprecated(since = "0.6.0", note = "please use `Committer::commit` instead")]
     pub async fn delete(&self, task: String) -> Result<(), RedisError> {
+        self.commit(task).await
+    }
+}
+
+#[async_trait]
+impl CommitBackend<String, RedisError> for RedisBackend {
+    /// Delete task from queue.
+    async fn commit(&self, task: String) -> Result<(), RedisError> {
+        if self.autodelete {
+            return Ok(());
+        }
         let mut con = match self.client.get_async_connection().await {
             Ok(con) => con,
             Err(e) => return Err(e),
