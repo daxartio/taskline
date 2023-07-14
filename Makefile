@@ -1,3 +1,8 @@
+DEFAULT_GOAL := all
+
+.PHONY: all
+all: fmt check test
+
 .PHONY: check
 check:
 	cargo fmt --all -- --check
