@@ -21,3 +21,13 @@ You can look at the example below.
 ```
 
 More examples can be found [here](https://github.com/daxartio/taskline/tree/main/examples).
+
+## Run the example
+
+```bash
+git clone git@github.com:daxartio/taskline.git
+# git clone https://github.com/daxartio/taskline.git
+cd taskline
+docker-compose up -d
+cargo run --example redis
+```

@@ -31,6 +31,7 @@ You can customize a format of an event for redis. Write your wrapper over [Redis
 - [x] Delayed tasks
 - [x] Support json
 - [x] Deleting from storage after handling. Experimental implementation
+- [ ] Pipeline
 - [ ] Support redis cluster
 - [ ] Metrics
 
