@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Introduction - Taskline</title>
+        <title>Changelog - Taskline</title>
 
 
         <!-- Custom HTML head -->
@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html" class="active">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -147,25 +147,73 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>The library allows to create scheduled tasks via Redis for Rust.</p>
-<h2 id="how-does-it-work"><a class="header" href="#how-does-it-work">How does it work?</a></h2>
-<p>Taskline revolves around the concept of a task. A task is a unit of work that is requested by a producer to be completed by a consumer / worker.</p>
-<p>A producer can schedule a task to be completed at a specific time in the future. A consumer can then fetch the task and complete it.</p>
-<p>There are backends for consumers and producers, which must impliment the <code>DequeuBackend</code> and <code>EnqueuBackend</code> traits. Right now, there is only one backend, which is Redis.</p>
-<h2 id="when-should-i-use-taskline"><a class="header" href="#when-should-i-use-taskline">When should I use Taskline?</a></h2>
-<p>Taskline is a good fit for applications that need to schedule work to be done in the future. For example, Taskline is a good fit for:</p>
+                        <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="051-2023-07-14"><a class="header" href="#051-2023-07-14">0.5.1 (2023-07-14)</a></h2>
+<h3 id="refactor"><a class="header" href="#refactor">Refactor</a></h3>
 <ul>
-<li>Scheduling emails to be sent in the future</li>
-<li>Scheduling a notification to be sent to a user in the future</li>
+<li>add committer instead of the delete method</li>
+</ul>
+<h2 id="050-2023-07-12"><a class="header" href="#050-2023-07-12">0.5.0 (2023-07-12)</a></h2>
+<h3 id="feat"><a class="header" href="#feat">Feat</a></h3>
+<ul>
+<li>add autodelete arg</li>
+</ul>
+<h2 id="042-2023-07-03"><a class="header" href="#042-2023-07-03">0.4.2 (2023-07-03)</a></h2>
+<h3 id="fix"><a class="header" href="#fix">Fix</a></h3>
+<ul>
+<li>update docs</li>
+</ul>
+<h2 id="041-2023-06-25"><a class="header" href="#041-2023-06-25">0.4.1 (2023-06-25)</a></h2>
+<h3 id="fix-1"><a class="header" href="#fix-1">Fix</a></h3>
+<ul>
+<li><strong>docs</strong>: update code's documentation</li>
+</ul>
+<h2 id="040-2023-06-25"><a class="header" href="#040-2023-06-25">0.4.0 (2023-06-25)</a></h2>
+<h3 id="feat-1"><a class="header" href="#feat-1">Feat</a></h3>
+<ul>
+<li>add JsonRedisBackend</li>
+</ul>
+<h2 id="030-2023-06-18"><a class="header" href="#030-2023-06-18">0.3.0 (2023-06-18)</a></h2>
+<h3 id="feat-2"><a class="header" href="#feat-2">Feat</a></h3>
+<ul>
+<li>return error</li>
+</ul>
+<h2 id="020-2023-06-15"><a class="header" href="#020-2023-06-15">0.2.0 (2023-06-15)</a></h2>
+<h3 id="feat-3"><a class="header" href="#feat-3">Feat</a></h3>
+<ul>
+<li>simpify api</li>
+</ul>
+<h2 id="011-2023-06-13"><a class="header" href="#011-2023-06-13">0.1.1 (2023-06-13)</a></h2>
+<h3 id="fix-2"><a class="header" href="#fix-2">Fix</a></h3>
+<ul>
+<li>allow to write of queue_key as String or &amp;str</li>
+</ul>
+<h2 id="010-2023-06-12"><a class="header" href="#010-2023-06-12">0.1.0 (2023-06-12)</a></h2>
+<h3 id="feat-4"><a class="header" href="#feat-4">Feat</a></h3>
+<ul>
+<li>add generics</li>
+<li>add loop instead of tasks</li>
+<li>use async await</li>
+<li>add scheduled tasks</li>
+<li>init</li>
+</ul>
+<h3 id="fix-3"><a class="header" href="#fix-3">Fix</a></h3>
+<ul>
+<li>add delay between requests</li>
 </ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="contributing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
-                            <a rel="next" href="quick-start.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="code-of-conduct.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -175,8 +223,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="contributing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
-                    <a rel="next" href="quick-start.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="code-of-conduct.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

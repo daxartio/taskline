@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html" class="active">Quick Start</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html" class="active">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -209,6 +209,13 @@ async fn main() {
     }
 }</code></pre>
 <p>More examples can be found <a href="https://github.com/daxartio/taskline/tree/main/examples">here</a>.</p>
+<h2 id="run-the-example"><a class="header" href="#run-the-example">Run the example</a></h2>
+<pre><code class="language-bash">git clone git@github.com:daxartio/taskline.git
+# git clone https://github.com/daxartio/taskline.git
+cd taskline
+docker-compose up -d
+cargo run --example redis
+</code></pre>
 
                     </main>
 
@@ -218,7 +225,7 @@ async fn main() {
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="additional-resources.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="user-guide/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -232,7 +239,7 @@ async fn main() {
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="additional-resources.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="user-guide/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

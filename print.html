@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -160,17 +160,6 @@
 <li>Scheduling emails to be sent in the future</li>
 <li>Scheduling a notification to be sent to a user in the future</li>
 </ul>
-<h2 id="a-format-of-a-task-for-sending-and-receiving-via-redis"><a class="header" href="#a-format-of-a-task-for-sending-and-receiving-via-redis">A format of a task for sending and receiving via Redis</a></h2>
-<p>Actualy, Taskline uses a format of a backend. You can use any format which you want.</p>
-<p>There are two formats of a task for sending and receiving via Redis which are implemented in the library:</p>
-<ul>
-<li>JSON</li>
-<li>String</li>
-</ul>
-<h2 id="deleting-from-storage-after-handling"><a class="header" href="#deleting-from-storage-after-handling">Deleting from storage after handling</a></h2>
-<p>If you want to delete a task from storage after handling, you can use <code>RedisJsonBackend</code> or <code>RedisBackend</code> with <code>autodelete=false</code> parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as <a href="https://redis.com/glossary/redlock/">redlock</a>. See <a href="https://redis.io/docs/manual/patterns/distributed-locks/">Distributed Locks with Redis</a>.</p>
-<p>Don't forget to delete a task explicitly from storage after handling. See <code>Committer::commit</code>.</p>
-<p>It's experimental implementation. In the future, it will be implemented more comfortable way.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
 <p>Taskline is provided as the a library on <a href="https://crates.io/crates/taskline">crates.io</a>. To get started, add taskline as a dependency to your project.</p>
 <pre><code>cargo add taskline
@@ -233,6 +222,273 @@ async fn main() {
     }
 }</code></pre>
 <p>More examples can be found <a href="https://github.com/daxartio/taskline/tree/main/examples">here</a>.</p>
+<h2 id="run-the-example"><a class="header" href="#run-the-example">Run the example</a></h2>
+<pre><code class="language-bash">git clone git@github.com:daxartio/taskline.git
+# git clone https://github.com/daxartio/taskline.git
+cd taskline
+docker-compose up -d
+cargo run --example redis
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="user-guide"><a class="header" href="#user-guide">User Guide</a></h1>
+<p>Main features which you have to know.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="formats-of-tasks"><a class="header" href="#formats-of-tasks">Formats of tasks</a></h1>
+<h2 id="a-format-of-a-task-for-sending-and-receiving-via-redis"><a class="header" href="#a-format-of-a-task-for-sending-and-receiving-via-redis">A format of a task for sending and receiving via Redis</a></h2>
+<p>Actualy, Taskline uses a format of a backend. You can use any format which you want.</p>
+<p>There are two formats of a task for sending and receiving via Redis which are implemented in the library:</p>
+<ul>
+<li>JSON</li>
+<li>String</li>
+</ul>
+<h2 id="example-1"><a class="header" href="#example-1">Example</a></h2>
+<pre><code class="language-rust no_run noplayground">use std::time::{SystemTime, UNIX_EPOCH};
+
+extern crate redis;
+use serde::{Deserialize, Serialize};
+use tokio::time::{sleep, Duration};
+
+use taskline::prelude::*;
+
+fn now() -&gt; f64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as f64
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+struct Data {
+    id: u64,
+    name: String,
+}
+
+#[tokio::main]
+async fn main() {
+    let queue_key = String::from(&quot;taskline&quot;);
+    let backend = JsonRedisBackend::&lt;Data&gt;::new(RedisBackend::new(
+        redis::Client::open(&quot;redis://127.0.0.1/&quot;).unwrap(),
+        queue_key,
+        10,
+        true,
+    ));
+    let producer = Producer::new(backend.clone());
+    let consumer = Consumer::new(backend.clone());
+
+    producer
+        .schedule(
+            Data {
+                id: 1,
+                name: &quot;Task&quot;.to_string(),
+            },
+            now() + 1000.,
+        )
+        .await
+        .unwrap();
+
+    loop {
+        let tasks = consumer.poll(now()).await.unwrap();
+        if tasks.is_empty() {
+            sleep(Duration::from_millis(100)).await;
+            continue;
+        }
+        for task in tasks {
+            tokio::task::spawn(async move {
+                println!(&quot;Consumed {:?}&quot;, task.unwrap());
+            });
+        }
+    }
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="autodelete"><a class="header" href="#autodelete">Autodelete</a></h1>
+<h2 id="deleting-from-a-storage-after-handling"><a class="header" href="#deleting-from-a-storage-after-handling">Deleting from a storage after handling</a></h2>
+<p>If you want to delete a task from storage after handling, you can use <code>RedisJsonBackend</code> or <code>RedisBackend</code> with <code>autodelete=false</code> parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as <a href="https://redis.com/glossary/redlock/">redlock</a>. See <a href="https://redis.io/docs/manual/patterns/distributed-locks/">Distributed Locks with Redis</a>.</p>
+<p>Don't forget to delete a task explicitly from storage after handling. See <code>Committer::commit</code>.</p>
+<p>It's experimental implementation. In the future, it will be implemented more comfortable way.</p>
+<h2 id="recomendation"><a class="header" href="#recomendation">Recomendation</a></h2>
+<p>I recomend to use <code>autodelete=True</code>, if it fits to you. This way is simple to undestanding and it do not require extra configurations.
+But you need to know that your tasks will not be handling again if your application has an error.</p>
+<h2 id="example-2"><a class="header" href="#example-2">Example</a></h2>
+<pre><code class="language-rust no_run noplayground">use std::time::{SystemTime, UNIX_EPOCH};
+
+extern crate redis;
+use serde::{Deserialize, Serialize};
+use tokio::time::{sleep, Duration};
+
+use taskline::prelude::*;
+
+fn now() -&gt; f64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as f64
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+struct Data {
+    id: u64,
+    name: String,
+}
+
+#[tokio::main]
+async fn main() {
+    let backend = JsonRedisBackend::&lt;Data&gt;::new(RedisBackend::new(
+        redis::Client::open(&quot;redis://127.0.0.1/&quot;).unwrap(),
+        String::from(&quot;taskline&quot;),
+        10,
+        false,
+    ));
+    let producer = Producer::new(backend.clone());
+    let consumer = Consumer::new(backend.clone());
+    let committer = Committer::new(backend.clone());
+
+    producer
+        .schedule(
+            Data {
+                id: 1,
+                name: &quot;Task&quot;.to_string(),
+            },
+            now() + 1000.,
+        )
+        .await
+        .unwrap();
+
+    loop {
+        let tasks = consumer.poll(now()).await.unwrap();
+        if tasks.is_empty() {
+            sleep(Duration::from_millis(100)).await;
+            continue;
+        }
+        for task in tasks {
+            let task = task.unwrap();
+            println!(&quot;Consumed {:?}&quot;, task);
+            committer.commit(task).await.unwrap();
+        }
+    }
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contribution-guidelines"><a class="header" href="#contribution-guidelines">Contribution guidelines</a></h1>
+<p>First off, thank you for considering contributing to taskline.</p>
+<p>If your contribution is not straightforward, please first discuss the change you
+wish to make by creating a new issue before making the change.</p>
+<h2 id="reporting-issues"><a class="header" href="#reporting-issues">Reporting issues</a></h2>
+<p>Before reporting an issue on the
+<a href="https://github.com/daxartio/taskline/issues">issue tracker</a>,
+please check that it has not already been reported by searching for some related
+keywords.</p>
+<h2 id="pull-requests"><a class="header" href="#pull-requests">Pull requests</a></h2>
+<p>Try to do one pull request per change.</p>
+<h2 id="commit-message-format"><a class="header" href="#commit-message-format">Commit Message Format</a></h2>
+<p>This project adheres to <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits</a>.
+A specification for adding human and machine readable meaning to commit messages.</p>
+<h3 id="commit-message-header"><a class="header" href="#commit-message-header">Commit Message Header</a></h3>
+<pre><code>&lt;type&gt;(&lt;scope&gt;): &lt;short summary&gt;
+  │       │             │
+  │       │             └─⫸ Summary in present tense. Not capitalized. No period at the end.
+  │       │
+  │       └─⫸ Commit Scope
+  │
+  └─⫸ Commit Type: feat|fix|build|ci|docs|perf|refactor|test|chore
+</code></pre>
+<h4 id="type"><a class="header" href="#type">Type</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>feat</th><th>Features</th><th>A new feature</th></tr></thead><tbody>
+<tr><td>fix</td><td>Bug Fixes</td><td>A bug fix</td></tr>
+<tr><td>docs</td><td>Documentation</td><td>Documentation only changes</td></tr>
+<tr><td>style</td><td>Styles</td><td>Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)</td></tr>
+<tr><td>refactor</td><td>Code Refactoring</td><td>A code change that neither fixes a bug nor adds a feature</td></tr>
+<tr><td>perf</td><td>Performance Improvements</td><td>A code change that improves performance</td></tr>
+<tr><td>test</td><td>Tests</td><td>Adding missing tests or correcting existing tests</td></tr>
+<tr><td>build</td><td>Builds</td><td>Changes that affect the build system or external dependencies (example scopes: main, serde)</td></tr>
+<tr><td>ci</td><td>Continuous Integrations</td><td>Changes to our CI configuration files and scripts (example scopes: Github Actions)</td></tr>
+<tr><td>chore</td><td>Chores</td><td>Other changes that don't modify src or test files</td></tr>
+<tr><td>revert</td><td>Reverts</td><td>Reverts a previous commit</td></tr>
+</tbody></table>
+</div>
+<h2 id="developing"><a class="header" href="#developing">Developing</a></h2>
+<h3 id="set-up"><a class="header" href="#set-up">Set up</a></h3>
+<p>This is no different than other Rust projects.</p>
+<pre><code class="language-shell">git clone https://github.com/daxartio/taskline
+cd taskline
+cargo test
+</code></pre>
+<h3 id="useful-commands"><a class="header" href="#useful-commands">Useful Commands</a></h3>
+<ul>
+<li>
+<p>Run Clippy:</p>
+<pre><code class="language-shell">cargo clippy --all-targets --all-features --workspace
+</code></pre>
+</li>
+<li>
+<p>Run all tests:</p>
+<pre><code class="language-shell">cargo test --all-features --workspace
+</code></pre>
+</li>
+<li>
+<p>Check to see if there are code formatting issues</p>
+<pre><code class="language-shell">cargo fmt --all -- --check
+</code></pre>
+</li>
+<li>
+<p>Format the code in the project</p>
+<pre><code class="language-shell">cargo fmt --all
+</code></pre>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="051-2023-07-14"><a class="header" href="#051-2023-07-14">0.5.1 (2023-07-14)</a></h2>
+<h3 id="refactor"><a class="header" href="#refactor">Refactor</a></h3>
+<ul>
+<li>add committer instead of the delete method</li>
+</ul>
+<h2 id="050-2023-07-12"><a class="header" href="#050-2023-07-12">0.5.0 (2023-07-12)</a></h2>
+<h3 id="feat"><a class="header" href="#feat">Feat</a></h3>
+<ul>
+<li>add autodelete arg</li>
+</ul>
+<h2 id="042-2023-07-03"><a class="header" href="#042-2023-07-03">0.4.2 (2023-07-03)</a></h2>
+<h3 id="fix"><a class="header" href="#fix">Fix</a></h3>
+<ul>
+<li>update docs</li>
+</ul>
+<h2 id="041-2023-06-25"><a class="header" href="#041-2023-06-25">0.4.1 (2023-06-25)</a></h2>
+<h3 id="fix-1"><a class="header" href="#fix-1">Fix</a></h3>
+<ul>
+<li><strong>docs</strong>: update code's documentation</li>
+</ul>
+<h2 id="040-2023-06-25"><a class="header" href="#040-2023-06-25">0.4.0 (2023-06-25)</a></h2>
+<h3 id="feat-1"><a class="header" href="#feat-1">Feat</a></h3>
+<ul>
+<li>add JsonRedisBackend</li>
+</ul>
+<h2 id="030-2023-06-18"><a class="header" href="#030-2023-06-18">0.3.0 (2023-06-18)</a></h2>
+<h3 id="feat-2"><a class="header" href="#feat-2">Feat</a></h3>
+<ul>
+<li>return error</li>
+</ul>
+<h2 id="020-2023-06-15"><a class="header" href="#020-2023-06-15">0.2.0 (2023-06-15)</a></h2>
+<h3 id="feat-3"><a class="header" href="#feat-3">Feat</a></h3>
+<ul>
+<li>simpify api</li>
+</ul>
+<h2 id="011-2023-06-13"><a class="header" href="#011-2023-06-13">0.1.1 (2023-06-13)</a></h2>
+<h3 id="fix-2"><a class="header" href="#fix-2">Fix</a></h3>
+<ul>
+<li>allow to write of queue_key as String or &amp;str</li>
+</ul>
+<h2 id="010-2023-06-12"><a class="header" href="#010-2023-06-12">0.1.0 (2023-06-12)</a></h2>
+<h3 id="feat-4"><a class="header" href="#feat-4">Feat</a></h3>
+<ul>
+<li>add generics</li>
+<li>add loop instead of tasks</li>
+<li>use async await</li>
+<li>add scheduled tasks</li>
+<li>init</li>
+</ul>
+<h3 id="fix-3"><a class="header" href="#fix-3">Fix</a></h3>
+<ul>
+<li>add delay between requests</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="code-of-conduct"><a class="header" href="#code-of-conduct">Code of Conduct</a></h1>
+<p>This project adheres to the Rust Code of Conduct, which can be found <a href="https://www.rust-lang.org/conduct.html">here</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="additional-resources"><a class="header" href="#additional-resources">Additional Resources</a></h1>
 <h2 id="quick-links"><a class="header" href="#quick-links">Quick links</a></h2>
 <ul>

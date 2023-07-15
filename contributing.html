@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Introduction - Taskline</title>
+        <title>Contributing - Taskline</title>
 
 
         <!-- Custom HTML head -->
@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html" class="active">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -147,25 +147,83 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>The library allows to create scheduled tasks via Redis for Rust.</p>
-<h2 id="how-does-it-work"><a class="header" href="#how-does-it-work">How does it work?</a></h2>
-<p>Taskline revolves around the concept of a task. A task is a unit of work that is requested by a producer to be completed by a consumer / worker.</p>
-<p>A producer can schedule a task to be completed at a specific time in the future. A consumer can then fetch the task and complete it.</p>
-<p>There are backends for consumers and producers, which must impliment the <code>DequeuBackend</code> and <code>EnqueuBackend</code> traits. Right now, there is only one backend, which is Redis.</p>
-<h2 id="when-should-i-use-taskline"><a class="header" href="#when-should-i-use-taskline">When should I use Taskline?</a></h2>
-<p>Taskline is a good fit for applications that need to schedule work to be done in the future. For example, Taskline is a good fit for:</p>
+                        <h1 id="contribution-guidelines"><a class="header" href="#contribution-guidelines">Contribution guidelines</a></h1>
+<p>First off, thank you for considering contributing to taskline.</p>
+<p>If your contribution is not straightforward, please first discuss the change you
+wish to make by creating a new issue before making the change.</p>
+<h2 id="reporting-issues"><a class="header" href="#reporting-issues">Reporting issues</a></h2>
+<p>Before reporting an issue on the
+<a href="https://github.com/daxartio/taskline/issues">issue tracker</a>,
+please check that it has not already been reported by searching for some related
+keywords.</p>
+<h2 id="pull-requests"><a class="header" href="#pull-requests">Pull requests</a></h2>
+<p>Try to do one pull request per change.</p>
+<h2 id="commit-message-format"><a class="header" href="#commit-message-format">Commit Message Format</a></h2>
+<p>This project adheres to <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits</a>.
+A specification for adding human and machine readable meaning to commit messages.</p>
+<h3 id="commit-message-header"><a class="header" href="#commit-message-header">Commit Message Header</a></h3>
+<pre><code>&lt;type&gt;(&lt;scope&gt;): &lt;short summary&gt;
+  │       │             │
+  │       │             └─⫸ Summary in present tense. Not capitalized. No period at the end.
+  │       │
+  │       └─⫸ Commit Scope
+  │
+  └─⫸ Commit Type: feat|fix|build|ci|docs|perf|refactor|test|chore
+</code></pre>
+<h4 id="type"><a class="header" href="#type">Type</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>feat</th><th>Features</th><th>A new feature</th></tr></thead><tbody>
+<tr><td>fix</td><td>Bug Fixes</td><td>A bug fix</td></tr>
+<tr><td>docs</td><td>Documentation</td><td>Documentation only changes</td></tr>
+<tr><td>style</td><td>Styles</td><td>Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)</td></tr>
+<tr><td>refactor</td><td>Code Refactoring</td><td>A code change that neither fixes a bug nor adds a feature</td></tr>
+<tr><td>perf</td><td>Performance Improvements</td><td>A code change that improves performance</td></tr>
+<tr><td>test</td><td>Tests</td><td>Adding missing tests or correcting existing tests</td></tr>
+<tr><td>build</td><td>Builds</td><td>Changes that affect the build system or external dependencies (example scopes: main, serde)</td></tr>
+<tr><td>ci</td><td>Continuous Integrations</td><td>Changes to our CI configuration files and scripts (example scopes: Github Actions)</td></tr>
+<tr><td>chore</td><td>Chores</td><td>Other changes that don't modify src or test files</td></tr>
+<tr><td>revert</td><td>Reverts</td><td>Reverts a previous commit</td></tr>
+</tbody></table>
+</div>
+<h2 id="developing"><a class="header" href="#developing">Developing</a></h2>
+<h3 id="set-up"><a class="header" href="#set-up">Set up</a></h3>
+<p>This is no different than other Rust projects.</p>
+<pre><code class="language-shell">git clone https://github.com/daxartio/taskline
+cd taskline
+cargo test
+</code></pre>
+<h3 id="useful-commands"><a class="header" href="#useful-commands">Useful Commands</a></h3>
 <ul>
-<li>Scheduling emails to be sent in the future</li>
-<li>Scheduling a notification to be sent to a user in the future</li>
+<li>
+<p>Run Clippy:</p>
+<pre><code class="language-shell">cargo clippy --all-targets --all-features --workspace
+</code></pre>
+</li>
+<li>
+<p>Run all tests:</p>
+<pre><code class="language-shell">cargo test --all-features --workspace
+</code></pre>
+</li>
+<li>
+<p>Check to see if there are code formatting issues</p>
+<pre><code class="language-shell">cargo fmt --all -- --check
+</code></pre>
+</li>
+<li>
+<p>Format the code in the project</p>
+<pre><code class="language-shell">cargo fmt --all
+</code></pre>
+</li>
 </ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="user-guide/autodelete.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
-                            <a rel="next" href="quick-start.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="changelog.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -175,8 +233,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="user-guide/autodelete.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
-                    <a rel="next" href="quick-start.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="changelog.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

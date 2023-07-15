@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active">Introduction</a></li><li class="chapter-item expanded "><a href="quick-start.html">Quick Start</a></li><li class="chapter-item expanded "><a href="user-guide/index.html">User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="user-guide/format.html">Formats</a></li><li class="chapter-item expanded "><a href="user-guide/autodelete.html">Autodelete</a></li></ol></li><li class="chapter-item expanded "><a href="contributing.html">Contributing</a></li><li class="chapter-item expanded "><a href="changelog.html">Changelog</a></li><li class="chapter-item expanded "><a href="code-of-conduct.html">Code Of Conduct</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="additional-resources.html">Additional Resources</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -159,17 +159,6 @@
 <li>Scheduling emails to be sent in the future</li>
 <li>Scheduling a notification to be sent to a user in the future</li>
 </ul>
-<h2 id="a-format-of-a-task-for-sending-and-receiving-via-redis"><a class="header" href="#a-format-of-a-task-for-sending-and-receiving-via-redis">A format of a task for sending and receiving via Redis</a></h2>
-<p>Actualy, Taskline uses a format of a backend. You can use any format which you want.</p>
-<p>There are two formats of a task for sending and receiving via Redis which are implemented in the library:</p>
-<ul>
-<li>JSON</li>
-<li>String</li>
-</ul>
-<h2 id="deleting-from-storage-after-handling"><a class="header" href="#deleting-from-storage-after-handling">Deleting from storage after handling</a></h2>
-<p>If you want to delete a task from storage after handling, you can use <code>RedisJsonBackend</code> or <code>RedisBackend</code> with <code>autodelete=false</code> parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as <a href="https://redis.com/glossary/redlock/">redlock</a>. See <a href="https://redis.io/docs/manual/patterns/distributed-locks/">Distributed Locks with Redis</a>.</p>
-<p>Don't forget to delete a task explicitly from storage after handling. See <code>Committer::commit</code>.</p>
-<p>It's experimental implementation. In the future, it will be implemented more comfortable way.</p>
 
                     </main>
 
