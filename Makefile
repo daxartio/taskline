@@ -1,7 +1,7 @@
 DEFAULT_GOAL := all
 
 .PHONY: all
-all: fmt check test
+all: fmt check test docs
 
 .PHONY: check
 check:
@@ -15,6 +15,10 @@ test:
 .PHONY: fmt
 fmt:
 	cargo fmt --all
+
+.PHONY: docs
+docs:
+	mdbook build
 
 .PHONY: d2
 d2:
