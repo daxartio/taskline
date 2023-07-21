@@ -38,9 +38,18 @@ where
     T: Serialize + Send + Sync,
 {
     /// Delete task from queue.
+    ///
+    /// New in version 0.5.0.
     #[deprecated(since = "0.6.0", note = "please use `Committer::commit` instead")]
     pub async fn delete(&self, data: T) -> Result<(), JsonRedisError> {
         self.commit(data).await
+    }
+
+    /// Check redis version.
+    ///
+    /// New in version 0.6.0.
+    pub async fn is_redis_version_ok(&self) -> Result<bool, redis::RedisError> {
+        self.backend.is_redis_version_ok().await
     }
 }
 
@@ -50,6 +59,8 @@ where
     T: Serialize + Send + Sync,
 {
     /// Delete task from queue.
+    ///
+    /// New in version 0.5.1.
     async fn commit(&self, data: T) -> Result<(), JsonRedisError> {
         if self.backend.autodelete {
             return Ok(());

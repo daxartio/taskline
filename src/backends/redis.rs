@@ -8,18 +8,22 @@ use crate::backend::{CommitBackend, DequeuBackend, EnqueuBackend};
 /// Configuration for Redis backend.
 /// You can use it to create `RedisBackend` instance.
 pub struct RedisBackendConfig<S: ToString> {
-    /// Redis key used to store tasks.
+    /// Redis key is used to store tasks.
     pub queue_key: S,
     /// Number of tasks to read in one batch.
     pub read_batch_size: usize,
     /// If `true`, tasks will be deleted from queue after reading.
     /// If autodelete is `false`, tasks should be deleted explicitly from queue after reading with `RedisBackend::delete`.
+    ///
+    /// New in version 0.5.0.
     pub autodelete: bool,
 }
 
 impl<S: ToString> RedisBackendConfig<S> {
     /// Create `RedisBackend` instance.
     /// It requires `redis::Client` instance.
+    ///
+    /// New in version 0.5.0.
     pub fn with_client(self, client: redis::Client) -> RedisBackend {
         RedisBackend::new(
             client,
@@ -59,9 +63,9 @@ impl RedisBackend {
     /// It requires `redis::Client` instance, redis key used to store tasks and number of tasks to read in one batch.
     /// It also creates lua script used to pop tasks from redis.
     /// * `client` - redis client.
-    /// * `queue_key` - redis key used to store tasks.
+    /// * `queue_key` - redis key is used to store tasks.
     /// * `read_batch_size` - number of tasks to read in one batch.
-    /// * `autodelete` - if `true`, tasks will be deleted from queue after reading. If `false`, tasks should be deleted explicitly from queue after reading with `RedisBackend::delete`.
+    /// * `autodelete` - if `true`, tasks will be deleted from queue after reading. If `false`, tasks should be deleted explicitly from queue after reading with `RedisBackend::delete`. New in version 0.5.0.
     pub fn new(
         client: redis::Client,
         queue_key: String,
@@ -92,16 +96,41 @@ impl RedisBackend {
 }
 
 impl RedisBackend {
-    /// Delete task from queue.
+    /// Delete a task from queue.
+    ///
+    /// New in version 0.5.0.
     #[deprecated(since = "0.6.0", note = "please use `Committer::commit` instead")]
     pub async fn delete(&self, task: String) -> Result<(), RedisError> {
         self.commit(task).await
+    }
+
+    /// Check redis version.
+    ///
+    /// New in version 0.6.0.
+    pub async fn is_redis_version_ok(&self) -> Result<bool, RedisError> {
+        let mut con = self.client.get_async_connection().await?;
+        let res: String = redis::cmd("INFO").query_async(&mut con).await?;
+        let mut ver = res
+            .lines()
+            .find(|s| s.contains("redis_version:"))
+            .unwrap()
+            .split(':')
+            .last()
+            .unwrap()
+            .split('.')
+            .take(2);
+
+        let major: u8 = ver.next().unwrap().parse().unwrap();
+        let minor: u8 = ver.next().unwrap().parse().unwrap();
+        Ok((major, minor) >= (6, 2))
     }
 }
 
 #[async_trait]
 impl CommitBackend<String, RedisError> for RedisBackend {
-    /// Delete task from queue.
+    /// Delete a task from queue.
+    ///
+    /// New in version 0.5.1.
     async fn commit(&self, task: String) -> Result<(), RedisError> {
         if self.autodelete {
             return Ok(());

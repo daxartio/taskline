@@ -23,6 +23,10 @@ async fn main() {
     let producer = Producer::new(backend.clone());
     let consumer = Consumer::new(backend.clone());
 
+    if !backend.is_redis_version_ok().await.unwrap() {
+        return;
+    }
+
     producer
         .schedule("Hello!".to_string(), now() + 1000.)
         .await
