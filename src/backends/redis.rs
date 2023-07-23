@@ -93,15 +93,55 @@ impl RedisBackend {
             autodelete,
         }
     }
-}
 
-impl RedisBackend {
+    /// Calls lua script to pop tasks from redis.
+    /// If there are no tasks in queue it returns empty vector.
+    /// If there are no tasks with score less than `score`, returns empty vector.
+    pub async fn read(&self, score: f64) -> Result<Vec<String>, RedisError> {
+        let mut con = match self.client.get_async_connection().await {
+            Ok(con) => con,
+            Err(e) => return Err(e),
+        };
+
+        let result: Vec<String> = match self
+            .pop_schedule_script
+            .key(self.queue_key.as_str())
+            .arg(score)
+            .arg(self.read_batch_size)
+            .arg(self.autodelete as u8)
+            .invoke_async(&mut con)
+            .await
+        {
+            Ok(result) => result,
+            Err(e) => return Err(e),
+        };
+
+        Ok(result)
+    }
+
+    /// Adds a task to redis.
+    /// It uses score to sort tasks in queue. Usually it is unix timestamp.
+    pub async fn write(&self, task: String, score: f64) -> Result<(), RedisError> {
+        let mut con = match self.client.get_async_connection().await {
+            Ok(con) => con,
+            Err(e) => return Err(e),
+        };
+        con.zadd(self.queue_key.as_str(), task, score).await
+    }
+
     /// Delete a task from queue.
     ///
     /// New in version 0.5.0.
-    #[deprecated(since = "0.6.0", note = "please use `Committer::commit` instead")]
     pub async fn delete(&self, task: String) -> Result<(), RedisError> {
-        self.commit(task).await
+        if self.autodelete {
+            return Ok(());
+        }
+        let mut con = match self.client.get_async_connection().await {
+            Ok(con) => con,
+            Err(e) => return Err(e),
+        };
+
+        con.zrem(self.queue_key.as_str(), task).await
     }
 
     /// Check redis version.
@@ -132,15 +172,7 @@ impl CommitBackend<String, RedisError> for RedisBackend {
     ///
     /// New in version 0.5.1.
     async fn commit(&self, task: String) -> Result<(), RedisError> {
-        if self.autodelete {
-            return Ok(());
-        }
-        let mut con = match self.client.get_async_connection().await {
-            Ok(con) => con,
-            Err(e) => return Err(e),
-        };
-
-        con.zrem(self.queue_key.as_str(), task).await
+        self.delete(task).await
     }
 }
 
@@ -150,25 +182,7 @@ impl DequeuBackend<String, f64, RedisError> for RedisBackend {
     /// If there are no tasks in queue it returns empty vector.
     /// If there are no tasks with score less than `score`, returns empty vector.
     async fn dequeue(&self, score: f64) -> Result<Vec<String>, RedisError> {
-        let mut con = match self.client.get_async_connection().await {
-            Ok(con) => con,
-            Err(e) => return Err(e),
-        };
-
-        let result: Vec<String> = match self
-            .pop_schedule_script
-            .key(self.queue_key.as_str())
-            .arg(score)
-            .arg(self.read_batch_size)
-            .arg(self.autodelete as u8)
-            .invoke_async(&mut con)
-            .await
-        {
-            Ok(result) => result,
-            Err(e) => return Err(e),
-        };
-
-        Ok(result)
+        self.read(score).await
     }
 }
 
@@ -177,10 +191,6 @@ impl EnqueuBackend<String, f64, RedisError> for RedisBackend {
     /// Adds a task to redis.
     /// It uses score to sort tasks in queue. Usually it is unix timestamp.
     async fn enqueue(&self, task: String, score: f64) -> Result<(), RedisError> {
-        let mut con = match self.client.get_async_connection().await {
-            Ok(con) => con,
-            Err(e) => return Err(e),
-        };
-        con.zadd(self.queue_key.as_str(), task, score).await
+        self.write(task, score).await
     }
 }

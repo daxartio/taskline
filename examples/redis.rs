@@ -14,26 +14,24 @@ fn now() -> f64 {
 
 #[tokio::main]
 async fn main() {
-    let backend = RedisBackendConfig {
+    let queue = RedisBackendConfig {
         queue_key: "taskline",
         read_batch_size: 10,
         autodelete: true,
     }
     .with_client(redis::Client::open("redis://127.0.0.1/").unwrap());
-    let producer = Producer::new(backend.clone());
-    let consumer = Consumer::new(backend.clone());
 
-    if !backend.is_redis_version_ok().await.unwrap() {
+    if !queue.is_redis_version_ok().await.unwrap() {
         return;
     }
 
-    producer
-        .schedule("Hello!".to_string(), now() + 1000.)
+    queue
+        .write("Hello!".to_string(), now() + 1000.)
         .await
         .unwrap();
 
     loop {
-        let tasks = consumer.poll(now()).await;
+        let tasks = queue.read(now()).await;
         match tasks {
             Ok(tasks) => {
                 if tasks.is_empty() {

@@ -31,19 +31,6 @@ impl<T> JsonRedisBackend<T> {
             _phantom: std::marker::PhantomData,
         }
     }
-}
-
-impl<T> JsonRedisBackend<T>
-where
-    T: Serialize + Send + Sync,
-{
-    /// Delete task from queue.
-    ///
-    /// New in version 0.5.0.
-    #[deprecated(since = "0.6.0", note = "please use `Committer::commit` instead")]
-    pub async fn delete(&self, data: T) -> Result<(), JsonRedisError> {
-        self.commit(data).await
-    }
 
     /// Check redis version.
     ///
@@ -53,15 +40,26 @@ where
     }
 }
 
-#[async_trait]
-impl<T> CommitBackend<T, JsonRedisError> for JsonRedisBackend<T>
+impl<T> JsonRedisBackend<T>
 where
     T: Serialize + Send + Sync,
 {
+    /// Serializes data to JSON and calls `RedisBackend::write`.
+    pub async fn write(&self, data: T, score: f64) -> Result<(), JsonRedisError> {
+        let data = match serde_json::to_string(&data) {
+            Ok(data) => data,
+            Err(e) => return Err(JsonRedisError::Serde(e)),
+        };
+        match self.backend.write(data, score).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(JsonRedisError::Redis(e)),
+        }
+    }
+
     /// Delete task from queue.
     ///
-    /// New in version 0.5.1.
-    async fn commit(&self, data: T) -> Result<(), JsonRedisError> {
+    /// New in version 0.5.0.
+    pub async fn delete(&self, data: T) -> Result<(), JsonRedisError> {
         if self.backend.autodelete {
             return Ok(());
         }
@@ -76,21 +74,38 @@ where
     }
 }
 
+impl<T> JsonRedisBackend<T>
+where
+    T: DeserializeOwned + Send + Sync,
+{
+    /// Returns `Vec<serde_json::Result<T>>` because it is possible that some tasks will be corrupted.
+    pub async fn read(&self, score: f64) -> Result<Vec<serde_json::Result<T>>, redis::RedisError> {
+        let data = self.backend.read(score).await?;
+        Ok(data.into_iter().map(|d| serde_json::from_str(&d)).collect())
+    }
+}
+
+#[async_trait]
+impl<T> CommitBackend<T, JsonRedisError> for JsonRedisBackend<T>
+where
+    T: Serialize + Send + Sync,
+{
+    /// Delete task from queue.
+    ///
+    /// New in version 0.5.1.
+    async fn commit(&self, data: T) -> Result<(), JsonRedisError> {
+        self.delete(data).await
+    }
+}
+
 #[async_trait]
 impl<T> EnqueuBackend<T, f64, JsonRedisError> for JsonRedisBackend<T>
 where
     T: Serialize + Send + Sync,
 {
-    /// Serializes data to JSON and calls `RedisBackend::enqueue`.
+    /// Serializes data to JSON and calls `RedisBackend::write`.
     async fn enqueue(&self, data: T, score: f64) -> Result<(), JsonRedisError> {
-        let data = match serde_json::to_string(&data) {
-            Ok(data) => data,
-            Err(e) => return Err(JsonRedisError::Serde(e)),
-        };
-        match self.backend.enqueue(data, score).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(JsonRedisError::Redis(e)),
-        }
+        self.write(data, score).await
     }
 }
 
@@ -101,7 +116,6 @@ where
 {
     /// Returns `Vec<serde_json::Result<T>>` because it is possible that some tasks will be corrupted.
     async fn dequeue(&self, score: f64) -> Result<Vec<serde_json::Result<T>>, redis::RedisError> {
-        let data = self.backend.dequeue(score).await?;
-        Ok(data.into_iter().map(|d| serde_json::from_str(&d)).collect())
+        self.read(score).await
     }
 }
