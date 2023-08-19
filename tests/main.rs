@@ -25,28 +25,28 @@ mod backend {
     }
 
     #[async_trait]
-    impl DequeuBackend<i32, (), ()> for MemBackend {
-        async fn dequeue(&self, _score: ()) -> Result<Vec<i32>, ()> {
+    impl<'a> DequeuBackend<'a, i32, (), ()> for MemBackend {
+        async fn dequeue(&self, _score: &'a ()) -> Result<Vec<i32>, ()> {
             Ok(vec![*self.queue.lock().unwrap().borrow().first().unwrap()])
         }
     }
 
     #[async_trait]
-    impl EnqueuBackend<i32, (), ()> for MemBackend {
-        async fn enqueue(&self, task: i32, _score: ()) -> Result<(), ()> {
-            self.queue.lock().unwrap().borrow_mut().push(task);
+    impl<'a> EnqueuBackend<'a, i32, (), ()> for MemBackend {
+        async fn enqueue(&self, task: &'a i32, _score: &'a ()) -> Result<(), ()> {
+            self.queue.lock().unwrap().borrow_mut().push(*task);
             Ok(())
         }
     }
 
     #[async_trait]
-    impl CommitBackend<i32, ()> for MemBackend {
-        async fn commit(&self, task: i32) -> Result<(), ()> {
+    impl<'a> CommitBackend<'a, i32, ()> for MemBackend {
+        async fn commit(&self, task: &'a i32) -> Result<(), ()> {
             self.queue
                 .lock()
                 .unwrap()
                 .borrow_mut()
-                .retain(|x| *x != task);
+                .retain(|x| *x != *task);
             Ok(())
         }
     }
@@ -59,12 +59,12 @@ async fn test_consumer() {
     let consumer = Consumer::new(backend.clone());
     let committer = Committer::new(backend.clone());
 
-    client.schedule(1, ()).await.unwrap();
+    client.schedule(&1, &()).await.unwrap();
 
-    let tasks = consumer.poll(()).await.unwrap();
+    let tasks = consumer.poll(&()).await.unwrap();
     for task in tasks {
         assert_eq!(task, 1);
-        committer.commit(task).await.unwrap();
+        committer.commit(&task).await.unwrap();
     }
     assert!(backend.queue.lock().unwrap().borrow().is_empty());
 }

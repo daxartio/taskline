@@ -26,12 +26,12 @@ async fn main() {
     }
 
     queue
-        .write("Hello!".to_string(), now() + 1000.)
+        .write(&"Hello!".to_string(), &(now() + 1000.))
         .await
         .unwrap();
 
     loop {
-        let tasks = queue.read(now()).await;
+        let tasks = queue.read(&now()).await;
         match tasks {
             Ok(tasks) => {
                 if tasks.is_empty() {

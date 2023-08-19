@@ -8,10 +8,10 @@
 The library allows to create scheduled tasks via Redis for Rust.
 
 ```rust
-producer.schedule("Hello!".to_string(), now() + 30000.).await;
+producer.schedule(&"Hello!".to_string(), &(now() + 30000.)).await;
 
 loop {
-    let tasks = consumer.poll(now()).await.unwrap();
+    let tasks = consumer.poll(&now()).await.unwrap();
 
     for task in tasks {
         println!("Consumed {:?}", task);
