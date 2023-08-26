@@ -197,12 +197,12 @@ async fn main() {
     }
 
     queue
-        .write(&quot;Hello!&quot;.to_string(), now() + 1000.)
+        .write(&amp;&quot;Hello!&quot;.to_string(), &amp;(now() + 1000.))
         .await
         .unwrap();
 
     loop {
-        let tasks = queue.read(now()).await;
+        let tasks = queue.read(&amp;now()).await;
         match tasks {
             Ok(tasks) =&gt; {
                 if tasks.is_empty() {
@@ -281,17 +281,17 @@ async fn main() {
 
     producer
         .schedule(
-            Data {
+            &amp;Data {
                 id: 1,
                 name: &quot;Task&quot;.to_string(),
             },
-            now() + 1000.,
+            &amp;(now() + 1000.),
         )
         .await
         .unwrap();
 
     loop {
-        let tasks = consumer.poll(now()).await.unwrap();
+        let tasks = consumer.poll(&amp;now()).await.unwrap();
         if tasks.is_empty() {
             sleep(Duration::from_millis(100)).await;
             continue;
@@ -347,17 +347,17 @@ async fn main() {
 
     producer
         .schedule(
-            Data {
+            &amp;Data {
                 id: 1,
                 name: &quot;Task&quot;.to_string(),
             },
-            now() + 1000.,
+            &amp;(now() + 1000.),
         )
         .await
         .unwrap();
 
     loop {
-        let tasks = consumer.poll(now()).await.unwrap();
+        let tasks = consumer.poll(&amp;now()).await.unwrap();
         if tasks.is_empty() {
             sleep(Duration::from_millis(100)).await;
             continue;
@@ -365,7 +365,7 @@ async fn main() {
         for task in tasks {
             let task = task.unwrap();
             println!(&quot;Consumed {:?}&quot;, task);
-            committer.commit(task).await.unwrap();
+            committer.commit(&amp;task).await.unwrap();
         }
     }
 }</code></pre>
@@ -440,18 +440,27 @@ cargo test
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="060-2023-07-21"><a class="header" href="#060-2023-07-21">0.6.0 (2023-07-21)</a></h2>
+<h2 id="070-2023-08-19"><a class="header" href="#070-2023-08-19">0.7.0 (2023-08-19)</a></h2>
 <h3 id="feat"><a class="header" href="#feat">Feat</a></h3>
+<ul>
+<li>use &amp; for args</li>
+</ul>
+<h3 id="refactor"><a class="header" href="#refactor">Refactor</a></h3>
+<ul>
+<li>don't use async trait methods</li>
+</ul>
+<h2 id="060-2023-07-21"><a class="header" href="#060-2023-07-21">0.6.0 (2023-07-21)</a></h2>
+<h3 id="feat-1"><a class="header" href="#feat-1">Feat</a></h3>
 <ul>
 <li>add is_redis_version_ok method</li>
 </ul>
 <h2 id="051-2023-07-14"><a class="header" href="#051-2023-07-14">0.5.1 (2023-07-14)</a></h2>
-<h3 id="refactor"><a class="header" href="#refactor">Refactor</a></h3>
+<h3 id="refactor-1"><a class="header" href="#refactor-1">Refactor</a></h3>
 <ul>
 <li>add committer instead of the delete method</li>
 </ul>
 <h2 id="050-2023-07-12"><a class="header" href="#050-2023-07-12">0.5.0 (2023-07-12)</a></h2>
-<h3 id="feat-1"><a class="header" href="#feat-1">Feat</a></h3>
+<h3 id="feat-2"><a class="header" href="#feat-2">Feat</a></h3>
 <ul>
 <li>add autodelete arg</li>
 </ul>
@@ -466,17 +475,17 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li><strong>docs</strong>: update code's documentation</li>
 </ul>
 <h2 id="040-2023-06-25"><a class="header" href="#040-2023-06-25">0.4.0 (2023-06-25)</a></h2>
-<h3 id="feat-2"><a class="header" href="#feat-2">Feat</a></h3>
+<h3 id="feat-3"><a class="header" href="#feat-3">Feat</a></h3>
 <ul>
 <li>add JsonRedisBackend</li>
 </ul>
 <h2 id="030-2023-06-18"><a class="header" href="#030-2023-06-18">0.3.0 (2023-06-18)</a></h2>
-<h3 id="feat-3"><a class="header" href="#feat-3">Feat</a></h3>
+<h3 id="feat-4"><a class="header" href="#feat-4">Feat</a></h3>
 <ul>
 <li>return error</li>
 </ul>
 <h2 id="020-2023-06-15"><a class="header" href="#020-2023-06-15">0.2.0 (2023-06-15)</a></h2>
-<h3 id="feat-4"><a class="header" href="#feat-4">Feat</a></h3>
+<h3 id="feat-5"><a class="header" href="#feat-5">Feat</a></h3>
 <ul>
 <li>simpify api</li>
 </ul>
@@ -486,7 +495,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>allow to write of queue_key as String or &amp;str</li>
 </ul>
 <h2 id="010-2023-06-12"><a class="header" href="#010-2023-06-12">0.1.0 (2023-06-12)</a></h2>
-<h3 id="feat-5"><a class="header" href="#feat-5">Feat</a></h3>
+<h3 id="feat-6"><a class="header" href="#feat-6">Feat</a></h3>
 <ul>
 <li>add generics</li>
 <li>add loop instead of tasks</li>

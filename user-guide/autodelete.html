@@ -191,17 +191,17 @@ async fn main() {
 
     producer
         .schedule(
-            Data {
+            &amp;Data {
                 id: 1,
                 name: &quot;Task&quot;.to_string(),
             },
-            now() + 1000.,
+            &amp;(now() + 1000.),
         )
         .await
         .unwrap();
 
     loop {
-        let tasks = consumer.poll(now()).await.unwrap();
+        let tasks = consumer.poll(&amp;now()).await.unwrap();
         if tasks.is_empty() {
             sleep(Duration::from_millis(100)).await;
             continue;
@@ -209,7 +209,7 @@ async fn main() {
         for task in tasks {
             let task = task.unwrap();
             println!(&quot;Consumed {:?}&quot;, task);
-            committer.commit(task).await.unwrap();
+            committer.commit(&amp;task).await.unwrap();
         }
     }
 }</code></pre>
