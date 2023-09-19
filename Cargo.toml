@@ -11,13 +11,32 @@ keywords = ["redis", "queue", "task", "async", "distributed"]
 categories = ["asynchronous", "web-programming"]
 license = "MIT"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.63"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+redis = ["dep:redis"]
+json = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 async-trait = "0.1.68"
-redis = { version = "0.23", features=["connection-manager", "tokio-comp"] }
-serde = { version = "1.0.164", features = ["serde_derive"] }
-serde_json = { version = "1.0.96" }
+redis = { version = "0.23", features=["connection-manager", "tokio-comp"], optional = true }
+serde = { version = "1.0.164", features = ["serde_derive"], optional = true }
+serde_json = { version = "1.0.96", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.28.2", features = ["full"] }
+
+[[example]]
+name = "redis"
+required-features = ["redis"]
+
+[[example]]
+name = "redis_json"
+required-features = ["redis", "json"]
+
+[[example]]
+name = "redis_json_autodelete"
+required-features = ["redis", "json"]
