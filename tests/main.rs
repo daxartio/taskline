@@ -25,23 +25,23 @@ mod backend {
     }
 
     #[async_trait]
-    impl<'a> DequeuBackend<'a, i32, (), ()> for MemBackend {
-        async fn dequeue(&self, _score: &'a ()) -> Result<Vec<i32>, ()> {
+    impl<'a> DequeuBackend<i32, (), ()> for MemBackend {
+        async fn dequeue(&self, _score: &()) -> Result<Vec<i32>, ()> {
             Ok(vec![*self.queue.lock().unwrap().borrow().first().unwrap()])
         }
     }
 
     #[async_trait]
-    impl<'a> EnqueuBackend<'a, i32, (), ()> for MemBackend {
-        async fn enqueue(&self, task: &'a i32, _score: &'a ()) -> Result<(), ()> {
+    impl<'a> EnqueuBackend<i32, (), ()> for MemBackend {
+        async fn enqueue(&self, task: &i32, _score: &()) -> Result<(), ()> {
             self.queue.lock().unwrap().borrow_mut().push(*task);
             Ok(())
         }
     }
 
     #[async_trait]
-    impl<'a> CommitBackend<'a, i32, ()> for MemBackend {
-        async fn commit(&self, task: &'a i32) -> Result<(), ()> {
+    impl<'a> CommitBackend<i32, ()> for MemBackend {
+        async fn commit(&self, task: &i32) -> Result<(), ()> {
             self.queue
                 .lock()
                 .unwrap()

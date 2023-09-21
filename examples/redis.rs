@@ -1,16 +1,7 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 extern crate redis;
 use tokio::time::{sleep, Duration};
 
 use taskline::prelude::*;
-
-fn now() -> f64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as f64
-}
 
 #[tokio::main]
 async fn main() {

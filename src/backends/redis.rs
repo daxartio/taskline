@@ -167,30 +167,30 @@ impl RedisBackend {
 }
 
 #[async_trait]
-impl<'a> CommitBackend<'a, String, RedisError> for RedisBackend {
+impl CommitBackend<String, RedisError> for RedisBackend {
     /// Delete a task from queue.
     ///
     /// New in version 0.5.1.
-    async fn commit(&self, task: &'a String) -> Result<(), RedisError> {
+    async fn commit(&self, task: &String) -> Result<(), RedisError> {
         self.delete(task).await
     }
 }
 
 #[async_trait]
-impl<'a> DequeuBackend<'a, String, f64, RedisError> for RedisBackend {
+impl DequeuBackend<String, f64, RedisError> for RedisBackend {
     /// Calls lua script to pop tasks from redis.
     /// If there are no tasks in queue it returns empty vector.
     /// If there are no tasks with score less than `score`, returns empty vector.
-    async fn dequeue(&self, score: &'a f64) -> Result<Vec<String>, RedisError> {
+    async fn dequeue(&self, score: &f64) -> Result<Vec<String>, RedisError> {
         self.read(score).await
     }
 }
 
 #[async_trait]
-impl<'a> EnqueuBackend<'a, String, f64, RedisError> for RedisBackend {
+impl EnqueuBackend<String, f64, RedisError> for RedisBackend {
     /// Adds a task to redis.
     /// It uses score to sort tasks in queue. Usually it is unix timestamp.
-    async fn enqueue(&self, task: &'a String, score: &'a f64) -> Result<(), RedisError> {
+    async fn enqueue(&self, task: &String, score: &f64) -> Result<(), RedisError> {
         self.write(task, score).await
     }
 }

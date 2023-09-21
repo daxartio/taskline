@@ -8,3 +8,5 @@ pub use crate::backends::redis_json::{JsonRedisBackend, JsonRedisError};
 pub use crate::committer::*;
 pub use crate::consumer::*;
 pub use crate::producer::*;
+#[cfg(feature = "tokio")]
+pub use crate::utils::*;

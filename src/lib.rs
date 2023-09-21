@@ -5,3 +5,5 @@ pub mod committer;
 pub mod consumer;
 pub mod prelude;
 pub mod producer;
+#[cfg(feature = "tokio")]
+pub mod utils;

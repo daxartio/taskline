@@ -71,35 +71,35 @@ where
 }
 
 #[async_trait]
-impl<'a, T, S> DequeuBackend<'a, T, S, ()> for MemoryBackend<T, S>
+impl<T, S> DequeuBackend<T, S, ()> for MemoryBackend<T, S>
 where
     T: Clone + PartialEq + Send,
     S: Copy + PartialOrd + Sync + Send,
 {
-    async fn dequeue(&self, score: &'a S) -> Result<Vec<T>, ()> {
+    async fn dequeue(&self, score: &S) -> Result<Vec<T>, ()> {
         Ok(self.read(score))
     }
 }
 
 #[async_trait]
-impl<'a, T, S> EnqueuBackend<'a, T, S, ()> for MemoryBackend<T, S>
+impl<T, S> EnqueuBackend<T, S, ()> for MemoryBackend<T, S>
 where
     T: Clone + PartialEq + Sync + Send,
     S: Copy + PartialOrd + Sync + Send,
 {
-    async fn enqueue(&self, task: &'a T, score: &'a S) -> Result<(), ()> {
+    async fn enqueue(&self, task: &T, score: &S) -> Result<(), ()> {
         self.write(task, score);
         Ok(())
     }
 }
 
 #[async_trait]
-impl<'a, T, S> CommitBackend<'a, T, ()> for MemoryBackend<T, S>
+impl<T, S> CommitBackend<T, ()> for MemoryBackend<T, S>
 where
     T: Clone + PartialEq + Sync + Send,
     S: Copy + PartialOrd + Sync + Send,
 {
-    async fn commit(&self, task: &'a T) -> Result<(), ()> {
+    async fn commit(&self, task: &T) -> Result<(), ()> {
         self.delete(task);
         Ok(())
     }

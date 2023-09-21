@@ -1,17 +1,7 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 extern crate redis;
 use serde::{Deserialize, Serialize};
-use tokio::time::{sleep, Duration};
 
 use taskline::prelude::*;
-
-fn now() -> f64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as f64
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Data {
@@ -42,16 +32,13 @@ async fn main() {
         .await
         .unwrap();
 
-    loop {
-        let tasks = consumer.poll(&now()).await.unwrap();
-        if tasks.is_empty() {
-            sleep(Duration::from_millis(100)).await;
-            continue;
-        }
-        for task in tasks {
+    poll_tasks(100, consumer, |tasks| async {
+        for task in tasks.unwrap() {
             let task = task.unwrap();
             println!("Consumed {:?}", task);
             committer.commit(&task).await.unwrap();
         }
-    }
+        true
+    })
+    .await;
 }
