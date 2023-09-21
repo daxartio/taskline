@@ -5,28 +5,42 @@ use async_trait::async_trait;
 
 use crate::backend::{CommitBackend, DequeuBackend, EnqueuBackend};
 
+type Queue<T, S> = Vec<Item<T, S>>;
+
 #[derive(Clone)]
-struct Item {
-    score: f64,
-    val: String,
+struct Item<T, S>
+where
+    T: Clone + PartialEq,
+    S: Copy + PartialOrd,
+{
+    score: S,
+    val: T,
 }
 
 /// Memory backend.
 ///
 /// New in version 0.8.0.
 #[derive(Clone, Default)]
-pub struct MemoryBackend {
-    queue: Arc<Mutex<RefCell<Vec<Item>>>>,
+pub struct MemoryBackend<T, S>
+where
+    T: Clone + PartialEq,
+    S: Copy + PartialOrd,
+{
+    queue: Arc<Mutex<RefCell<Queue<T, S>>>>,
 }
 
-impl MemoryBackend {
-    pub fn new() -> MemoryBackend {
+impl<T, S> MemoryBackend<T, S>
+where
+    T: Clone + PartialEq,
+    S: Copy + PartialOrd,
+{
+    pub fn new() -> MemoryBackend<T, S> {
         MemoryBackend {
             queue: Arc::new(Mutex::new(RefCell::new(Vec::new()))),
         }
     }
 
-    pub fn read(&self, score: &f64) -> Vec<String> {
+    pub fn read(&self, score: &S) -> Vec<T> {
         self.queue
             .lock()
             .unwrap()
@@ -34,46 +48,58 @@ impl MemoryBackend {
             .iter()
             .filter(|v| v.score <= *score)
             .map(|v| v.val.clone())
-            .collect::<Vec<String>>()
+            .collect::<Vec<T>>()
     }
 
-    pub fn write(&self, task: &String, score: &f64) {
+    pub fn write(&self, task: &T, score: &S) {
         let queue = self.queue.lock().unwrap();
         let mut queue = queue.borrow_mut();
-        queue.retain(|v| *v.val != *task);
+        queue.retain(|v| v.val != *task);
         queue.push(Item {
             score: *score,
             val: task.clone(),
         });
     }
 
-    pub fn delete(&self, task: &String) {
+    pub fn delete(&self, task: &T) {
         self.queue
             .lock()
             .unwrap()
             .borrow_mut()
-            .retain(|v| *v.val != *task);
+            .retain(|v| v.val != *task);
     }
 }
 
 #[async_trait]
-impl<'a> DequeuBackend<'a, String, f64, ()> for MemoryBackend {
-    async fn dequeue(&self, score: &'a f64) -> Result<Vec<String>, ()> {
+impl<'a, T, S> DequeuBackend<'a, T, S, ()> for MemoryBackend<T, S>
+where
+    T: Clone + PartialEq + Send,
+    S: Copy + PartialOrd + Sync + Send,
+{
+    async fn dequeue(&self, score: &'a S) -> Result<Vec<T>, ()> {
         Ok(self.read(score))
     }
 }
 
 #[async_trait]
-impl<'a> EnqueuBackend<'a, String, f64, ()> for MemoryBackend {
-    async fn enqueue(&self, task: &'a String, score: &'a f64) -> Result<(), ()> {
+impl<'a, T, S> EnqueuBackend<'a, T, S, ()> for MemoryBackend<T, S>
+where
+    T: Clone + PartialEq + Sync + Send,
+    S: Copy + PartialOrd + Sync + Send,
+{
+    async fn enqueue(&self, task: &'a T, score: &'a S) -> Result<(), ()> {
         self.write(task, score);
         Ok(())
     }
 }
 
 #[async_trait]
-impl<'a> CommitBackend<'a, String, ()> for MemoryBackend {
-    async fn commit(&self, task: &'a String) -> Result<(), ()> {
+impl<'a, T, S> CommitBackend<'a, T, ()> for MemoryBackend<T, S>
+where
+    T: Clone + PartialEq + Sync + Send,
+    S: Copy + PartialOrd + Sync + Send,
+{
+    async fn commit(&self, task: &'a T) -> Result<(), ()> {
         self.delete(task);
         Ok(())
     }

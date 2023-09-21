@@ -4,6 +4,11 @@ use tokio::time::{sleep, Duration};
 
 use taskline::prelude::*;
 
+#[derive(Debug, PartialEq, Clone)]
+struct Task {
+    name: String,
+}
+
 fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -19,11 +24,21 @@ async fn main() {
     let committer = Committer::new(backend.clone());
 
     producer
-        .schedule(&"task".to_string(), &now())
+        .schedule(
+            &Task {
+                name: "task".to_string(),
+            },
+            &now(),
+        )
         .await
         .unwrap();
     producer
-        .schedule(&"task".to_string(), &(now() + 3000.))
+        .schedule(
+            &Task {
+                name: "task2".to_string(),
+            },
+            &(now() + 3000.),
+        )
         .await
         .unwrap();
 
