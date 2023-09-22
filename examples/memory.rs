@@ -21,15 +21,6 @@ async fn main() {
         )
         .await
         .unwrap();
-    producer
-        .schedule(
-            &Task {
-                name: "task2".to_string(),
-            },
-            &(now() + 3000.),
-        )
-        .await
-        .unwrap();
 
     poll_tasks(100, consumer, |tasks| async {
         for task in tasks.unwrap() {
