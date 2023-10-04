@@ -5,7 +5,7 @@
 [![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline)
 <!-- [![Coverage Status](https://coveralls.io/repos/github/daxartio/taskline/badge.svg?branch=main)](https://coveralls.io/github/daxartio/taskline?branch=main) -->
 
-The library allows to create scheduled tasks via Redis for Rust.
+The library allows for creating scheduled tasks via Redis for Rust.
 
 ```rust
 producer.schedule(&"Hello!".to_string(), &(now() + 30000.)).await;
@@ -27,11 +27,11 @@ You can customize a format of an event for redis. Write your wrapper over [Redis
 
 ## Features
 
-- [x] Send/receive tasks in redis
+- [x] Send/receive tasks in Redis
 - [x] Delayed tasks
 - [x] Support json
-- [x] Deleting from storage after handling. Experimental implementation
-- [ ] Support redis cluster
+- [x] Deleting from a storage after handling
+- [ ] Support Redis Cluster
 - [ ] Metrics
 
 ## Requirements
