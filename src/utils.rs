@@ -30,7 +30,7 @@ pub async fn poll_tasks<T, R, E, Fut>(
         match consumer.poll(&score).await {
             Ok(tasks) => {
                 if tasks.is_empty() {
-                    if interval == 0 {
+                    if interval != 0 {
                         sleep(Duration::from_millis(interval)).await;
                     }
                     continue;
@@ -43,7 +43,7 @@ pub async fn poll_tasks<T, R, E, Fut>(
                 if !callback(Err(err)).await {
                     break;
                 }
-                if interval == 0 {
+                if interval != 0 {
                     sleep(Duration::from_millis(interval)).await;
                 }
             }
