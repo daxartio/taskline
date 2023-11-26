@@ -17,7 +17,7 @@ where
     val: T,
 }
 
-/// Memory backend.
+/// Memory backend. O(n). This backend is not recommended for production use.
 ///
 /// New in version 0.8.0.
 #[derive(Clone, Default)]
@@ -37,6 +37,12 @@ where
     pub fn new() -> MemoryBackend<T, S> {
         MemoryBackend {
             queue: Arc::new(Mutex::new(RefCell::new(Vec::new()))),
+        }
+    }
+
+    pub fn with_capacity(capacity: usize) -> MemoryBackend<T, S> {
+        MemoryBackend {
+            queue: Arc::new(Mutex::new(RefCell::new(Vec::with_capacity(capacity)))),
         }
     }
 
