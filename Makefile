@@ -6,11 +6,11 @@ all: fmt check test docs
 .PHONY: check
 check:
 	cargo fmt --all -- --check
-	cargo clippy -- -D warnings
+	cargo clippy --all-features --all-targets -- -D warnings
 
 .PHONY: test
 test:
-	cargo test
+	cargo test --all-features
 
 .PHONY: fmt
 fmt:
