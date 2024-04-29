@@ -98,7 +98,7 @@ impl RedisBackend {
     /// If there are no tasks in queue it returns empty vector.
     /// If there are no tasks with score less than `score`, returns empty vector.
     pub async fn read(&self, score: &f64) -> Result<Vec<String>, RedisError> {
-        let mut con = match self.client.get_async_connection().await {
+        let mut con = match self.client.get_multiplexed_async_connection().await {
             Ok(con) => con,
             Err(e) => return Err(e),
         };
@@ -122,7 +122,7 @@ impl RedisBackend {
     /// Adds a task to redis.
     /// It uses score to sort tasks in queue. Usually it is unix timestamp.
     pub async fn write(&self, task: &String, score: &f64) -> Result<(), RedisError> {
-        let mut con = match self.client.get_async_connection().await {
+        let mut con = match self.client.get_multiplexed_async_connection().await {
             Ok(con) => con,
             Err(e) => return Err(e),
         };
@@ -136,7 +136,7 @@ impl RedisBackend {
         if self.autodelete {
             return Ok(());
         }
-        let mut con = match self.client.get_async_connection().await {
+        let mut con = match self.client.get_multiplexed_async_connection().await {
             Ok(con) => con,
             Err(e) => return Err(e),
         };
@@ -148,7 +148,7 @@ impl RedisBackend {
     ///
     /// New in version 0.6.0.
     pub async fn is_redis_version_ok(&self) -> Result<bool, RedisError> {
-        let mut con = self.client.get_async_connection().await?;
+        let mut con = self.client.get_multiplexed_async_connection().await?;
         let res: String = redis::cmd("INFO").query_async(&mut con).await?;
         let mut ver = res
             .lines()
