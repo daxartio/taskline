@@ -8,7 +8,7 @@ cargo add taskline
 
 ## Example
 
-The library provides a asynchronous code for interacting with Redis. You can use `tokio` or `async-std` as the runtime.
+The library provides an asynchronous code for interacting with Redis. You can use `tokio` or `async-std` as the runtime.
 
 First of all, you need to create a `RedisBackend` instance. You can do this by using the `RedisBackend::new` method or `RedisBackendConfig` struct.
 

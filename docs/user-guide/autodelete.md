@@ -8,9 +8,9 @@ Don't forget to delete a task explicitly from storage after handling. See `Commi
 
 It's experimental implementation. In the future, it will be implemented more comfortable way.
 
-## Recomendation
+## Recommendation
 
-I recomend to use `autodelete=True`, if it fits to you. This way is simple to undestanding and it do not require extra configurations.
+I recommend to use `autodelete=True`, if it fits to you. This way is simple to understanding and it do not require extra configurations.
 But you need to know that your tasks will not be handling again if your application has an error.
 
 ## Example

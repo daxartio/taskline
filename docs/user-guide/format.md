@@ -2,7 +2,7 @@
 
 ## A format of a task for sending and receiving via Redis
 
-Actualy, Taskline uses a format of a backend. You can use any format which you want.
+Actually, Taskline uses a format of a backend. You can use any format which you want.
 
 There are two formats of a task for sending and receiving via Redis which are implemented in the library:
 
