@@ -165,7 +165,7 @@
 <pre><code>cargo add taskline
 </code></pre>
 <h2 id="example"><a class="header" href="#example">Example</a></h2>
-<p>The library provides a asynchronous code for interacting with Redis. You can use <code>tokio</code> or <code>async-std</code> as the runtime.</p>
+<p>The library provides an asynchronous code for interacting with Redis. You can use <code>tokio</code> or <code>async-std</code> as the runtime.</p>
 <p>First of all, you need to create a <code>RedisBackend</code> instance. You can do this by using the <code>RedisBackend::new</code> method or <code>RedisBackendConfig</code> struct.</p>
 <p>After that, you need to create a consumer and a producer. These are simple structs for more comfortable interaction with the library. You can create them using the <code>Consumer::new</code> and <code>Producer::new</code> methods.</p>
 <p>You can look at the example below.</p>
@@ -223,10 +223,10 @@ docker-compose up -d
 cargo run --example redis
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="user-guide"><a class="header" href="#user-guide">User Guide</a></h1>
-<p>Main features which you have to know.</p>
+<p>That you need to know.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="formats-of-tasks"><a class="header" href="#formats-of-tasks">Formats of tasks</a></h1>
 <h2 id="a-format-of-a-task-for-sending-and-receiving-via-redis"><a class="header" href="#a-format-of-a-task-for-sending-and-receiving-via-redis">A format of a task for sending and receiving via Redis</a></h2>
-<p>Actualy, Taskline uses a format of a backend. You can use any format which you want.</p>
+<p>Actually, Taskline uses a format of a backend. You can use any format which you want.</p>
 <p>There are two formats of a task for sending and receiving via Redis which are implemented in the library:</p>
 <ul>
 <li>JSON</li>
@@ -286,8 +286,8 @@ async fn main() {
 <p>If you want to delete a task from storage after handling, you can use <code>RedisJsonBackend</code> or <code>RedisBackend</code> with <code>autodelete=false</code> parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as <a href="https://redis.com/glossary/redlock/">redlock</a>. See <a href="https://redis.io/docs/manual/patterns/distributed-locks/">Distributed Locks with Redis</a>.</p>
 <p>Don't forget to delete a task explicitly from storage after handling. See <code>Committer::commit</code>.</p>
 <p>It's experimental implementation. In the future, it will be implemented more comfortable way.</p>
-<h2 id="recomendation"><a class="header" href="#recomendation">Recomendation</a></h2>
-<p>I recomend to use <code>autodelete=True</code>, if it fits to you. This way is simple to undestanding and it do not require extra configurations.
+<h2 id="recommendation"><a class="header" href="#recommendation">Recommendation</a></h2>
+<p>I recommend to use <code>autodelete=True</code>, if it fits to you. This way is simple to understanding and it do not require extra configurations.
 But you need to know that your tasks will not be handling again if your application has an error.</p>
 <h2 id="example-2"><a class="header" href="#example-2">Example</a></h2>
 <pre><code class="language-rust no_run noplayground">extern crate redis;
