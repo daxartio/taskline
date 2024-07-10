@@ -11,7 +11,7 @@ keywords = ["redis", "queue", "task", "async", "distributed"]
 categories = ["asynchronous", "web-programming"]
 license = "MIT"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.65"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -23,17 +23,17 @@ json = ["dep:serde", "dep:serde_json"]
 tokio = ["dep:tokio"]
 
 [dependencies]
-async-trait = "0.1.80"
-redis = { version = "0.25.3", features=["connection-manager", "tokio-comp"], optional = true }
-serde = { version = "1.0.199", features = ["serde_derive"], optional = true }
-serde_json = { version = "1.0.116", optional = true }
-tokio = { version = "1.37", features = ["time"], optional = true }
+async-trait = "0.1.81"
+redis = { version = "0.25.4", features=["connection-manager", "tokio-comp"], optional = true }
+serde = { version = "1.0.204", features = ["serde_derive"], optional = true }
+serde_json = { version = "1.0.120", optional = true }
+tokio = { version = "1.38", features = ["time"], optional = true }
 
 [dev-dependencies]
-tokio = { version = "1.37", features = ["time", "macros", "rt-multi-thread"]}
-redis = { version = "0.25.3", features=["connection-manager", "tokio-comp"] }
-serde = { version = "1.0.199", features = ["serde_derive"] }
-serde_json = { version = "1.0.116" }
+tokio = { version = "1.38", features = ["time", "macros", "rt-multi-thread"]}
+redis = { version = "0.25.4", features=["connection-manager", "tokio-comp"] }
+serde = { version = "1.0.204", features = ["serde_derive"] }
+serde_json = { version = "1.0.120" }
 
 [[example]]
 name = "memory"
@@ -41,12 +41,12 @@ required-features = ["tokio"]
 
 [[example]]
 name = "redis"
-required-features = ["redis"]
+required-features = ["redis", "tokio"]
 
 [[example]]
 name = "redis_json"
-required-features = ["redis", "json"]
+required-features = ["redis", "json", "tokio"]
 
 [[example]]
 name = "redis_json_autodelete"
-required-features = ["redis", "json"]
+required-features = ["redis", "json", "tokio"]
