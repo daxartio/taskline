@@ -2,12 +2,9 @@ name: Security audit
 
 on:
   schedule:
-    # Runs at 00:00 UTC everyday
-    - cron: '0 0 * * *'
-  push:
-    paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
+    # Runs at 00:00 on Monday
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
   pull_request:
 
 jobs:
@@ -15,8 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - uses: actions-rs/audit-check@v1
+        uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
