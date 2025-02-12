@@ -7,23 +7,7 @@
 
 The library allows for creating scheduled tasks via Redis for Rust.
 
-```rust
-producer.schedule(&"Hello!".to_string(), &(now() + 30000.)).await;
-
-loop {
-    let tasks = consumer.poll(&now()).await.unwrap();
-
-    for task in tasks {
-        println!("Consumed {:?}", task);
-    }
-}
-```
-
-That means the Consumed will be printed in 30 seconds.
-
 You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs). See [redis_json backend](src/backends/redis_json.rs).
-
-![diagram](diagram.png)
 
 ## Features
 

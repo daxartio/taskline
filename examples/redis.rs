@@ -1,4 +1,3 @@
-extern crate redis;
 use tokio::time::{sleep, Duration};
 
 use taskline::prelude::*;
@@ -6,13 +5,13 @@ use taskline::prelude::*;
 #[tokio::main]
 async fn main() {
     let queue = RedisBackendConfig {
-        queue_key: "taskline",
+        queue_key: "taskline".to_string(),
         read_batch_size: 10,
         autodelete: true,
     }
     .with_client(redis::Client::open("redis://127.0.0.1/").unwrap());
 
-    if !queue.is_redis_version_ok().await.unwrap() {
+    if !queue.check_version().await.unwrap() {
         return;
     }
 

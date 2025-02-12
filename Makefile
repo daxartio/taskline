@@ -19,7 +19,3 @@ fmt:
 .PHONY: docs
 docs:
 	mdbook build
-
-.PHONY: d2
-d2:
-	d2 diagram.d2 diagram.png

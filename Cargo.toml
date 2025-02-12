@@ -22,30 +22,17 @@ json = ["dep:serde", "dep:serde_json"]
 tokio = ["dep:tokio"]
 
 [dependencies]
-async-trait = "0.1"
 redis = { version = "0.28", features=["connection-manager", "tokio-comp"], optional = true }
 serde = { version = "1.0", features = ["serde_derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 tokio = { version = "1.43", features = ["time"], optional = true }
 
 [dev-dependencies]
-tokio = { version = "1.43", features = ["time", "macros", "rt-multi-thread"]}
 redis = { version = "0.28", features=["connection-manager", "tokio-comp"] }
 serde = { version = "1.0", features = ["serde_derive"] }
 serde_json = { version = "1.0" }
-
-[[example]]
-name = "memory"
-required-features = ["tokio"]
+tokio = { version = "1.43", features = ["time", "macros", "rt-multi-thread"]}
 
 [[example]]
 name = "redis"
 required-features = ["redis", "tokio"]
-
-[[example]]
-name = "redis_json"
-required-features = ["redis", "json", "tokio"]
-
-[[example]]
-name = "redis_json_autodelete"
-required-features = ["redis", "json", "tokio"]

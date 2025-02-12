@@ -1,8 +1,5 @@
-extern crate redis;
-use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::backend::{CommitBackend, DequeuBackend, EnqueuBackend};
 use crate::backends::redis::RedisBackend;
 
 /// Error type for `JsonRedisBackend`.
@@ -33,10 +30,8 @@ impl<T> JsonRedisBackend<T> {
     }
 
     /// Check redis version.
-    ///
-    /// New in version 0.6.0.
-    pub async fn is_redis_version_ok(&self) -> Result<bool, redis::RedisError> {
-        self.backend.is_redis_version_ok().await
+    pub async fn check_version(&self) -> Result<bool, redis::RedisError> {
+        self.backend.check_version().await
     }
 }
 
@@ -57,8 +52,6 @@ where
     }
 
     /// Delete task from queue.
-    ///
-    /// New in version 0.5.0.
     pub async fn delete(&self, data: &T) -> Result<(), JsonRedisError> {
         if self.backend.autodelete {
             return Ok(());
@@ -67,7 +60,7 @@ where
             Ok(data) => data,
             Err(e) => return Err(JsonRedisError::Serde(e)),
         };
-        match self.backend.commit(&data).await {
+        match self.backend.delete(&data).await {
             Ok(_) => Ok(()),
             Err(e) => Err(JsonRedisError::Redis(e)),
         }
@@ -82,40 +75,5 @@ where
     pub async fn read(&self, score: &f64) -> Result<Vec<serde_json::Result<T>>, redis::RedisError> {
         let data = self.backend.read(score).await?;
         Ok(data.into_iter().map(|d| serde_json::from_str(&d)).collect())
-    }
-}
-
-#[async_trait]
-impl<T> CommitBackend<T, JsonRedisError> for JsonRedisBackend<T>
-where
-    T: Serialize + Send + Sync,
-{
-    /// Delete task from queue.
-    ///
-    /// New in version 0.5.1.
-    async fn commit(&self, data: &T) -> Result<(), JsonRedisError> {
-        self.delete(data).await
-    }
-}
-
-#[async_trait]
-impl<T> EnqueuBackend<T, f64, JsonRedisError> for JsonRedisBackend<T>
-where
-    T: Serialize + Send + Sync,
-{
-    /// Serializes data to JSON and calls `RedisBackend::write`.
-    async fn enqueue(&self, data: &T, score: &f64) -> Result<(), JsonRedisError> {
-        self.write(data, score).await
-    }
-}
-
-#[async_trait]
-impl<T> DequeuBackend<serde_json::Result<T>, f64, redis::RedisError> for JsonRedisBackend<T>
-where
-    T: DeserializeOwned + Send + Sync,
-{
-    /// Returns `Vec<serde_json::Result<T>>` because it is possible that some tasks will be corrupted.
-    async fn dequeue(&self, score: &f64) -> Result<Vec<serde_json::Result<T>>, redis::RedisError> {
-        self.read(score).await
     }
 }

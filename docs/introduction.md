@@ -8,7 +8,7 @@ Taskline revolves around the concept of a task. A task is a unit of work that is
 
 A producer can schedule a task to be completed at a specific time in the future. A consumer can then fetch the task and complete it.
 
-There are backends for consumers and producers, which must impliment the `DequeuBackend` and `EnqueuBackend` traits. Right now, there is only one backend, which is Redis.
+There are backends for consumers and producers, which must implement the `DequeuBackend` and `EnqueuBackend` traits. Right now, there is only one backend, which is Redis.
 
 ## When should I use Taskline?
 
