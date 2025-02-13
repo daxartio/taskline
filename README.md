@@ -5,31 +5,24 @@
 [![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline)
 <!-- [![Coverage Status](https://coveralls.io/repos/github/daxartio/taskline/badge.svg?branch=main)](https://coveralls.io/github/daxartio/taskline?branch=main) -->
 
-The library allows for creating scheduled tasks via Redis for Rust.
+Taskline is a Rust library for scheduling tasks via Redis.
 
-You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs). See [redis_json backend](src/backends/redis_json.rs).
+## Overview
 
-## How does it work?
+Taskline provides a simple way to schedule and process tasks asynchronously. It follows a producer-consumer model, where a producer schedules tasks to be executed at a specific time, and a consumer retrieves and processes them.
 
-Taskline revolves around the concept of a task. A task is a unit of work that is requested by a producer to be completed by a consumer / worker.
+## Use Cases
 
-A producer can schedule a task to be completed at a specific time in the future. A consumer can then fetch the task and complete it.
+Taskline is ideal for applications that require deferred execution, such as:
 
-There are backends for consumers and producers, which must implement the `DequeuBackend` and `EnqueuBackend` traits. Right now, there is only one backend, which is Redis.
-
-## When should I use Taskline?
-
-Taskline is a good fit for applications that need to schedule work to be done in the future. For example, Taskline is a good fit for:
-
-- Scheduling emails to be sent in the future
-- Scheduling a notification to be sent to a user in the future
-
+- Scheduling emails to be sent at a later time.
+- Sending notifications to users at a specific moment.
+- Any background job that needs time-based execution.
 
 ## Features
 
 - [x] Send/receive tasks in Redis
 - [x] Delayed tasks
-- [x] Support json
 - [x] Deleting from a storage after handling
 - [ ] Support Redis Cluster
 - [ ] Metrics
@@ -46,31 +39,21 @@ Taskline is a good fit for applications that need to schedule work to be done in
 cargo add taskline
 ```
 
-# Autodelete
+## Task Auto-Deletion
 
-## Deleting from a storage after handling
+### Default Behavior
 
-If you want to delete a task from storage after handling, you can use `RedisJsonBackend` or `RedisBackend` with `autodelete=false` parameter. It's safe to use it only with one consumer. If you have more than one consumer, you can use distributed lock by redis. It's also named as [redlock](https://redis.com/glossary/redlock/). See [Distributed Locks with Redis](https://redis.io/docs/manual/patterns/distributed-locks/).
+By default, Taskline automatically deletes tasks from storage after they are processed. This is the recommended approach for most use cases, as it ensures tasks are not executed multiple read.
 
-Don't forget to delete a task explicitly from storage after handling. See `Committer::commit`.
+### Disabling Auto-Deletion
 
-It's experimental implementation. In the future, it will be implemented more comfortable way.
+If you prefer to manually manage task deletion, you can disable auto-delete by setting `autodelete=false`. However, this should only be used with a single consumer to avoid duplicate processing. If multiple consumers are involved, consider using a distributed lock mechanism like [redlock](https://redis.com/glossary/redlock/). For more details, see [Distributed Locks with Redis](https://redis.io/docs/manual/patterns/distributed-locks/).
 
-## Recommendation
+To manually remove a processed task, use: `Taskline::delete`.
 
-I recommend to use `autodelete=True`, if it fits to you. This way is simple to understanding and it do not require extra configurations.
-But you need to know that your tasks will not be handling again if your application has an error.
+### Recommendation
 
-# Formats of tasks
-
-## A format of a task for sending and receiving via Redis
-
-Actually, Taskline uses a format of a backend. You can use any format which you want.
-
-There are two formats of a task for sending and receiving via Redis which are implemented in the library:
-
-- JSON
-- String
+If your use case allows, it is recommended to keep `autodelete=true`, as it simplifies task management and reduces configuration overhead. However, be aware that in the event of an application crash, tasks may be lost before they are processed.
 
 ## License
 
