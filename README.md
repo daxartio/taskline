@@ -5,31 +5,24 @@
 [![Docs.rs](https://docs.rs/taskline/badge.svg)](https://docs.rs/taskline)
 <!-- [![Coverage Status](https://coveralls.io/repos/github/daxartio/taskline/badge.svg?branch=main)](https://coveralls.io/github/daxartio/taskline?branch=main) -->
 
-The library allows for creating scheduled tasks via Redis for Rust.
+Taskline is a Rust library for scheduling tasks via Redis.
 
-```rust
-producer.schedule(&"Hello!".to_string(), &(now() + 30000.)).await;
+## Overview
 
-loop {
-    let tasks = consumer.poll(&now()).await.unwrap();
+Taskline provides a simple way to schedule and process tasks asynchronously. It follows a producer-consumer model, where a producer schedules tasks to be executed at a specific time, and a consumer retrieves and processes them.
 
-    for task in tasks {
-        println!("Consumed {:?}", task);
-    }
-}
-```
+## Use Cases
 
-That means the Consumed will be printed in 30 seconds.
+Taskline is ideal for applications that require deferred execution, such as:
 
-You can customize a format of an event for redis. Write your wrapper over [RedisBackend](src/backends/redis.rs). See [redis_json backend](src/backends/redis_json.rs).
-
-![diagram](diagram.png)
+- Scheduling emails to be sent at a later time.
+- Sending notifications to users at a specific moment.
+- Any background job that needs time-based execution.
 
 ## Features
 
 - [x] Send/receive tasks in Redis
 - [x] Delayed tasks
-- [x] Support json
 - [x] Deleting from a storage after handling
 - [ ] Support Redis Cluster
 - [ ] Metrics
@@ -45,6 +38,22 @@ You can customize a format of an event for redis. Write your wrapper over [Redis
 ```
 cargo add taskline
 ```
+
+## Task Auto-Deletion
+
+### Default Behavior
+
+By default, Taskline automatically deletes tasks from storage after they are processed. This is the recommended approach for most use cases, as it ensures tasks are not executed multiple read.
+
+### Disabling Auto-Deletion
+
+If you prefer to manually manage task deletion, you can disable auto-delete by setting `autodelete=false`. However, this should only be used with a single consumer to avoid duplicate processing. If multiple consumers are involved, consider using a distributed lock mechanism like [redlock](https://redis.com/glossary/redlock/). For more details, see [Distributed Locks with Redis](https://redis.io/docs/manual/patterns/distributed-locks/).
+
+To manually remove a processed task, use: `Taskline::delete`.
+
+### Recommendation
+
+If your use case allows, it is recommended to keep `autodelete=true`, as it simplifies task management and reduces configuration overhead. However, be aware that in the event of an application crash, tasks may be lost before they are processed.
 
 ## License
 
