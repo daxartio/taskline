@@ -3,10 +3,9 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use tokio::time::{sleep, Duration};
-use tokio_util::task::TaskTracker;
-
 use taskline::prelude::*;
+use tokio::time::{Duration, sleep};
+use tokio_util::task::TaskTracker;
 
 fn now() -> f64 {
     SystemTime::now()

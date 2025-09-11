@@ -1,8 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use tokio::time::{sleep, Duration};
-
 use taskline::prelude::*;
+use tokio::time::{Duration, sleep};
 
 fn now() -> f64 {
     SystemTime::now()
