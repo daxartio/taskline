@@ -1,5 +1,109 @@
+x-redis-node: &redis-node
+  image: redis:alpine
+  command:
+    - sh
+    - -ec
+    - |
+      exec redis-server \
+        --port "$${REDIS_PORT}" \
+        --cluster-enabled yes \
+        --cluster-config-file nodes.conf \
+        --cluster-node-timeout 5000 \
+        --cluster-announce-hostname 127.0.0.1 \
+        --cluster-announce-port "$${REDIS_PORT}" \
+        --cluster-announce-bus-port "$${REDIS_BUS_PORT}" \
+        --cluster-preferred-endpoint-type hostname \
+        --appendonly yes
+  healthcheck:
+    test: ["CMD-SHELL", "redis-cli -p $$REDIS_PORT ping | grep PONG"]
+    interval: 2s
+    timeout: 2s
+    retries: 15
+
 services:
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
+
+  redis-cluster-1:
+    <<: *redis-node
+    environment:
+      REDIS_PORT: 7100
+      REDIS_BUS_PORT: 17100
+    ports:
+      - "7100:7100"
+      - "17100:17100"
+
+  redis-cluster-2:
+    <<: *redis-node
+    environment:
+      REDIS_PORT: 7101
+      REDIS_BUS_PORT: 17101
+    ports:
+      - "7101:7101"
+      - "17101:17101"
+
+  redis-cluster-3:
+    <<: *redis-node
+    environment:
+      REDIS_PORT: 7102
+      REDIS_BUS_PORT: 17102
+    ports:
+      - "7102:7102"
+      - "17102:17102"
+
+  redis-cluster-4:
+    <<: *redis-node
+    environment:
+      REDIS_PORT: 7103
+      REDIS_BUS_PORT: 17103
+    ports:
+      - "7103:7103"
+      - "17103:17103"
+
+  redis-cluster-5:
+    <<: *redis-node
+    environment:
+      REDIS_PORT: 7104
+      REDIS_BUS_PORT: 17104
+    ports:
+      - "7104:7104"
+      - "17104:17104"
+
+  redis-cluster-6:
+    <<: *redis-node
+    environment:
+      REDIS_PORT: 7105
+      REDIS_BUS_PORT: 17105
+    ports:
+      - "7105:7105"
+      - "17105:17105"
+
+  redis-cluster-init:
+    image: redis:alpine
+    depends_on:
+      redis-cluster-1:
+        condition: service_healthy
+      redis-cluster-2:
+        condition: service_healthy
+      redis-cluster-3:
+        condition: service_healthy
+      redis-cluster-4:
+        condition: service_healthy
+      redis-cluster-5:
+        condition: service_healthy
+      redis-cluster-6:
+        condition: service_healthy
+    command:
+      - sh
+      - -ec
+      - |
+        if redis-cli -h redis-cluster-1 -p 7100 cluster info | grep -q 'cluster_state:ok'; then
+          exit 0
+        fi
+        redis-cli --cluster create \
+          redis-cluster-1:7100 redis-cluster-2:7101 redis-cluster-3:7102 \
+          redis-cluster-4:7103 redis-cluster-5:7104 redis-cluster-6:7105 \
+          --cluster-replicas 1 --cluster-yes
+    restart: "no"

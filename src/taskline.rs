@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use redis::{AsyncCommands, FromRedisValue, RedisError, ToRedisArgs, ToSingleRedisArg};
 
 static POP_SCHEDULE_SCRIPT: &str = r#"
@@ -65,20 +67,48 @@ impl<K: ToRedisArgs + Default + Clone> TasklineConfig<K> {
     }
 }
 
+/// Creates asynchronous Redis connections for a [`Taskline`].
+pub trait RedisConnectionProvider {
+    type Connection: redis::aio::ConnectionLike + Send + Sync;
+
+    fn get_async_connection(
+        &self,
+    ) -> impl Future<Output = Result<Self::Connection, RedisError>> + Send;
+}
+
+impl RedisConnectionProvider for redis::Client {
+    type Connection = redis::aio::MultiplexedConnection;
+
+    fn get_async_connection(
+        &self,
+    ) -> impl Future<Output = Result<Self::Connection, RedisError>> + Send {
+        self.get_multiplexed_async_connection()
+    }
+}
+
+#[cfg(feature = "cluster")]
+impl RedisConnectionProvider for redis::cluster::ClusterClient {
+    type Connection = redis::cluster_async::ClusterConnection;
+
+    fn get_async_connection(
+        &self,
+    ) -> impl Future<Output = Result<Self::Connection, RedisError>> + Send {
+        self.get_async_connection()
+    }
+}
+
 /// # Taskline.
 /// You can use score to sort tasks in queue. Usually it is unix timestamp.
 #[derive(Debug, Clone)]
-pub struct Taskline<K: ToRedisArgs + Clone> {
+pub struct Taskline<K: ToRedisArgs + Clone, C = redis::Client> {
     config: TasklineConfig<K>,
-    client: redis::Client,
+    client: C,
     pop_schedule_script: redis::Script,
 }
 
-impl<K: ToRedisArgs + Clone> Taskline<K> {
-    /// Creates new instance of `Taskline`.
-    ///
-    /// It requires `redis::Client` instance, redis key used to store tasks and number of tasks to read in one batch.
-    pub fn new(config: TasklineConfig<K>, client: redis::Client) -> Self {
+impl<K: ToRedisArgs + Clone, C: RedisConnectionProvider> Taskline<K, C> {
+    /// Creates a task queue backed by a standalone Redis or Redis Cluster client.
+    pub fn new(config: TasklineConfig<K>, client: C) -> Self {
         Self {
             config,
             client,
@@ -90,7 +120,7 @@ impl<K: ToRedisArgs + Clone> Taskline<K> {
     /// If there are no tasks in queue it returns empty vector.
     /// If there are no tasks with score less than `score`, returns empty vector.
     pub async fn read<S: ToRedisArgs, R: FromRedisValue>(&self, score: S) -> Result<R, RedisError> {
-        let mut con = self.client.get_multiplexed_async_connection().await?;
+        let mut con = self.client.get_async_connection().await?;
 
         let result: R = self
             .pop_schedule_script
@@ -105,7 +135,7 @@ impl<K: ToRedisArgs + Clone> Taskline<K> {
     }
 }
 
-impl<K: ToSingleRedisArg + Clone + Send + Sync> Taskline<K> {
+impl<K: ToSingleRedisArg + Clone + Send + Sync, C: RedisConnectionProvider> Taskline<K, C> {
     /// Adds a task to redis.
     /// It uses score to sort tasks in queue. Usually it is unix timestamp.
     pub async fn write<M: ToSingleRedisArg + Send + Sync, S: ToSingleRedisArg + Send + Sync>(
@@ -113,7 +143,7 @@ impl<K: ToSingleRedisArg + Clone + Send + Sync> Taskline<K> {
         task: M,
         score: S,
     ) -> Result<(), RedisError> {
-        let mut con = self.client.get_multiplexed_async_connection().await?;
+        let mut con = self.client.get_async_connection().await?;
         con.zadd(self.config.queue_key.clone(), task, score).await
     }
 
@@ -122,7 +152,7 @@ impl<K: ToSingleRedisArg + Clone + Send + Sync> Taskline<K> {
         if self.config.autodelete {
             return Ok(());
         }
-        let mut con = self.client.get_multiplexed_async_connection().await?;
+        let mut con = self.client.get_async_connection().await?;
 
         con.zrem(self.config.queue_key.clone(), task).await
     }

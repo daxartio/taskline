@@ -24,7 +24,7 @@ Taskline is ideal for applications that require deferred execution, such as:
 - [x] Send/receive tasks in Redis
 - [x] Delayed tasks
 - [x] Deleting from a storage after handling
-- [ ] Support Redis Cluster
+- [x] Support Redis Cluster
 - [ ] Metrics
 
 ## Requirements
@@ -38,6 +38,29 @@ Taskline is ideal for applications that require deferred execution, such as:
 ```
 cargo add taskline
 ```
+
+### Redis Cluster
+
+Enable the `cluster` feature and construct `Taskline` with a `redis::cluster::ClusterClient`:
+
+```toml
+[dependencies]
+taskline = { version = "0.10", features = ["cluster"] }
+redis = { version = "1.6", features = ["cluster-async", "tokio-comp"] }
+```
+
+Start Redis Cluster in Docker, wait for its initialization, and run the example locally:
+
+```sh
+docker compose down
+docker compose up -d redis-cluster-init
+docker wait "$(docker compose ps -aq redis-cluster-init)"
+cargo run --example cluster --features cluster
+```
+
+The initial `docker compose down` is required after changing cluster topology because Redis persists its node configuration inside each container.
+
+Taskline sends every queue operation to one Redis key, making it compatible with Redis Cluster hash-slot routing.
 
 ## Task Auto-Deletion
 

@@ -1,1 +1,1 @@
-pub use crate::taskline::{Taskline, TasklineConfig};
+pub use crate::taskline::{RedisConnectionProvider, Taskline, TasklineConfig};
