@@ -1,4 +1,4 @@
-use redis::{AsyncCommands, FromRedisValue, RedisError, ToRedisArgs};
+use redis::{AsyncCommands, FromRedisValue, RedisError, ToRedisArgs, ToSingleRedisArg};
 
 static POP_SCHEDULE_SCRIPT: &str = r#"
 local key = KEYS[1]
@@ -105,10 +105,10 @@ impl<K: ToRedisArgs + Clone> Taskline<K> {
     }
 }
 
-impl<K: ToRedisArgs + Clone + Send + Sync> Taskline<K> {
+impl<K: ToSingleRedisArg + Clone + Send + Sync> Taskline<K> {
     /// Adds a task to redis.
     /// It uses score to sort tasks in queue. Usually it is unix timestamp.
-    pub async fn write<M: ToRedisArgs + Send + Sync, S: ToRedisArgs + Send + Sync>(
+    pub async fn write<M: ToSingleRedisArg + Send + Sync, S: ToSingleRedisArg + Send + Sync>(
         &self,
         task: M,
         score: S,

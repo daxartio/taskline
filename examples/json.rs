@@ -30,7 +30,7 @@ async fn main() {
                 id: 1,
                 name: "Task".to_string(),
             })
-            .ok(),
+            .unwrap(),
             now() + 3000.,
         )
         .await
